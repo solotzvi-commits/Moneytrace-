@@ -1,0 +1,25 @@
+{
+  "name": "MONEYTRACE — לאן הכסף נעלם?",
+  "short_name": "MONEYTRACE",
+  "description": "מעקב הוצאות, זיהוי מנויים ותובנות לחיסכון",
+  "lang": "he",
+  "dir": "rtl",
+  "start_url": "./",
+  "display": "standalone",
+  "background_color": "#090e19",
+  "theme_color": "#090e19",
+  "icons": [
+    {
+      "src": "assets/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "assets/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    }
+  ]
+}

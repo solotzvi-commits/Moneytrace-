@@ -1,0 +1,67 @@
+<!doctype html>
+<html lang="he" dir="rtl">
+<head>
+  <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <meta name="theme-color" content="#090e19"><meta name="description" content="MONEYTRACE — להבין לאן הכסף הולך, לזהות מנויים ולחסוך יותר.">
+  <link rel="manifest" href="manifest.webmanifest"><link rel="stylesheet" href="styles.css">
+  <title>MONEYTRACE — לאן הכסף נעלם?</title>
+</head>
+<body>
+<div class="app-shell">
+  <aside class="sidebar">
+    <a class="brand" href="#overview"><span class="brand-mark">M</span><span>MONEYTRACE<small>הכסף שלך. בשליטה שלך.</small></span></a>
+    <nav>
+      <button class="nav-item active" data-view="overview"><span>◫</span> סקירה כללית</button>
+      <button class="nav-item" data-view="transactions"><span>↕</span> תנועות</button>
+      <button class="nav-item" data-view="subscriptions"><span>⟳</span> מנויים ותשלומים</button>
+      <button class="nav-item" data-view="insights"><span>✧</span> תובנות וחיסכון</button>
+      <button class="nav-item" data-view="connect"><span>⌁</span> חיבור חשבון</button>
+    </nav>
+    <div class="sidebar-bottom"><div class="secure"><span class="secure-icon">✓</span><div><b>הפרטיות שלך חשובה</b><small>הנתונים נשמרים במכשיר שלך</small></div></div><small class="version">גרסת בטא · 0.2</small></div>
+  </aside>
+  <main class="main">
+    <header class="topbar"><div><div class="eyebrow" id="todayLabel">המרכז הפיננסי שלך</div><h1 id="pageTitle">סקירה כללית</h1></div><div class="top-actions"><span class="demo-pill" id="dataMode">נתוני הדגמה</span><button class="avatar" aria-label="פרופיל">צ</button></div></header>
+    <section id="view-overview" class="view active">
+      <div class="welcome-row"><div><h2>היי, בוא נראה מה קורה עם הכסף שלך.</h2><p>תמונה ברורה של ההכנסות, ההוצאות וההרגלים שלך.</p></div><button class="primary" id="quickAdd">＋ הוצאה חדשה</button></div>
+      <div class="stat-grid">
+        <article class="stat-card balance-card"><div class="stat-label">יתרה מחושבת החודש <span class="info-dot" title="הכנסות פחות הוצאות שהוזנו או יובאו">i</span></div><div class="stat-value" id="balance">₪0</div><div class="stat-foot"><span class="green-dot"></span> הכנסות פחות הוצאות</div><div class="balance-glow"></div></article>
+        <article class="stat-card"><div class="stat-label">הכנסות החודש</div><div class="stat-value" id="income">₪0</div><div class="stat-foot muted">לפי התנועות שהוזנו</div></article>
+        <article class="stat-card"><div class="stat-label">הוצאות החודש</div><div class="stat-value" id="expenses">₪0</div><div class="stat-foot muted" id="expenseCount">0 תנועות</div></article>
+        <article class="stat-card"><div class="stat-label">מנויים שזוהו</div><div class="stat-value" id="subscriptionTotal">₪0</div><div class="stat-foot muted" id="subscriptionCount">0 תשלומים חוזרים אפשריים</div></article>
+      </div>
+      <div class="content-grid">
+        <article class="panel spending-panel"><div class="panel-heading"><div><h3>לאן הכסף הולך?</h3><p>חלוקת ההוצאות לפי קטגוריה</p></div><span class="period-label">החודש</span></div><div class="spending-layout"><div class="donut-wrap"><div class="donut" id="donut"><div class="donut-center"><b id="donutTotal">₪0</b><small>סה״כ הוצאות</small></div></div></div><div class="legend" id="categoryLegend"></div></div></article>
+        <article class="panel insight-panel"><div class="panel-heading"><div><h3>תובנה בשבילך</h3><p>דברים שכדאי לשים לב אליהם</p></div><span class="sparkle">✧</span></div><div id="topInsight" class="insight-box"><b>מתחילים בקטן</b><p>ייבא תנועות או הוסף הוצאה כדי לקבל תובנות אישיות.</p></div><button class="text-button" data-go="insights">לכל התובנות ←</button></article>
+      </div>
+      <article class="panel recent-panel"><div class="panel-heading"><div><h3>תנועות אחרונות</h3><p>הפעילות הפיננסית האחרונה שלך</p></div><button class="text-button" data-go="transactions">כל התנועות ←</button></div><div class="table-wrap"><table><thead><tr><th>תיאור</th><th>קטגוריה</th><th>תאריך</th><th>סכום</th></tr></thead><tbody id="recentRows"></tbody></table></div></article>
+    </section>
+    <section id="view-transactions" class="view">
+      <div class="section-intro"><div><h2>כל התנועות</h2><p>נהל את ההוצאות וההכנסות שלך במקום אחד.</p></div><div class="toolbar"><label class="upload-button">↑ ייבוא קובץ CSV<input id="csvInput" type="file" accept=".csv,text/csv"></label><button class="primary" id="addTransaction">＋ הוספת תנועה</button></div></div>
+      <div class="panel filter-panel"><input id="searchTransactions" class="search" placeholder="חיפוש לפי שם בית עסק…"><select id="typeFilter"><option value="all">כל התנועות</option><option value="expense">הוצאות</option><option value="income">הכנסות</option></select><select id="categoryFilter"><option value="all">כל הקטגוריות</option></select><button class="secondary" id="downloadCsv">↓ ייצוא CSV</button></div>
+      <article class="panel"><div class="table-wrap"><table><thead><tr><th>תיאור</th><th>קטגוריה</th><th>תאריך</th><th>סוג</th><th>סכום</th><th></th></tr></thead><tbody id="transactionRows"></tbody></table></div><div class="empty hidden" id="emptyTransactions">לא נמצאו תנועות. אפשר לייבא קובץ CSV או להוסיף תנועה ידנית.</div></article>
+      <p class="hint">ייבוא CSV תומך בכותרות נפוצות בעברית ובאנגלית. הקובץ מעובד מקומית בדפדפן.</p>
+    </section>
+    <section id="view-subscriptions" class="view">
+      <div class="section-intro"><div><h2>מנויים ותשלומים חוזרים</h2><p>מצא חיובים שחוזרים על עצמם כדי שלא תשלם על מה ששכחת.</p></div><span class="soft-badge">זיהוי לפי היסטוריית תנועות</span></div>
+      <div class="stat-grid two"><article class="stat-card"><div class="stat-label">עלות חודשית משוערת</div><div class="stat-value" id="subMonthly">₪0</div><div class="stat-foot muted">סכום חיובים חוזרים שזוהו</div></article><article class="stat-card"><div class="stat-label">עלות שנתית משוערת</div><div class="stat-value" id="subYearly">₪0</div><div class="stat-foot muted">בהנחה שהחיובים ימשיכו</div></article></div>
+      <article class="panel"><div class="panel-heading"><div><h3>חיובים חוזרים אפשריים</h3><p>המערכת מזהה שם דומה וסכומים שחוזרים לאורך זמן.</p></div><span class="sparkle">⟳</span></div><div id="subscriptionList" class="subscription-list"></div><div class="empty hidden" id="emptySubs">עדיין אין מספיק היסטוריה לזיהוי מנויים. ייבא תנועות של כמה חודשים כדי לשפר את הזיהוי.</div></article>
+      <p class="hint">הזיהוי הוא הצעה בלבד. יש לבדוק מול דף החשבון לפני ביטול שירות כלשהו.</p>
+    </section>
+    <section id="view-insights" class="view">
+      <div class="section-intro"><div><h2>תובנות וחיסכון</h2><p>תובנות מבוססות על התנועות שלך — בלי לנחש.</p></div></div>
+      <div class="insight-grid" id="insightGrid"></div>
+      <article class="panel savings-panel"><div class="panel-heading"><div><h3>מחשבון חיסכון</h3><p>בדוק כמה כסף יכול להישאר אצלך אם מצמצמים הוצאה.</p></div></div><div class="savings-controls"><label>הוצאה חודשית לצמצום <input type="number" id="savingAmount" min="0" value="100"></label><label>אחוז צמצום <input type="range" id="savingPercent" min="5" max="100" value="25"><span id="savingPercentLabel">25%</span></label><div class="saving-result"><small>חיסכון אפשרי בשנה</small><b id="savingResult">₪300</b></div></div></article>
+    </section>
+    <section id="view-connect" class="view">
+      <div class="section-intro"><div><h2>חיבור חשבון בנק</h2><p>ייבוא מאובטח של תנועות כדי לקבל תמונה פיננסית מלאה.</p></div><span class="soft-badge">בפיתוח</span></div>
+      <article class="panel connect-hero"><div class="connect-icon">⌁</div><div><h3>חיבור בנק אמיתי — השלב הבא</h3><p>כדי להתחבר לבנקים בישראל נדרש לעבוד עם ספק שירות מידע פיננסי בעל רישיון מתאים, לקבל הסכמה מפורשת מהמשתמש ולהשתמש בתהליך ההזדהות המאובטח של הבנק.</p><p>לא נבקש ממך סיסמה או קוד חד־פעמי, ולא נבצע פעולות בחשבון.</p></div></article>
+      <div class="bank-grid"><div class="bank-card"><b>ייבוא CSV</b><small>זמין עכשיו · העלאת קובץ תנועות מהבנק</small><button class="secondary" id="connectCsv">ייבוא קובץ</button></div><div class="bank-card"><b>Open Banking</b><small>דורש הסכם מסחרי, ספק מורשה ובדיקות אבטחה</small><button class="secondary" id="providerInfo">פרטי האינטגרציה</button></div></div>
+      <div class="notice"><b>פרטיות ואבטחה</b><p>בגרסה הנוכחית המידע נשמר מקומית בדפדפן שלך. אין שרת, אין חיבור לבנק ואין העברת מידע החוצה. לפני השקה ציבורית נוסיף הצפנה, ניהול הרשאות, מחיקה מלאה ומדיניות פרטיות.</p></div>
+    </section>
+  </main>
+</div>
+<nav class="mobile-nav"><button class="active" data-view="overview">◫<small>סקירה</small></button><button data-view="transactions">↕<small>תנועות</small></button><button data-view="subscriptions">⟳<small>מנויים</small></button><button data-view="insights">✧<small>תובנות</small></button><button data-view="connect">⌁<small>בנק</small></button></nav>
+<div class="modal-backdrop hidden" id="modal"><div class="modal"><button class="modal-close" id="closeModal">×</button><h3>הוספת תנועה</h3><form id="transactionForm"><label>תיאור<input name="description" required placeholder="למשל: קניות בסופר"></label><div class="form-row"><label>סכום בש״ח<input name="amount" type="number" min="0.01" step="0.01" required></label><label>סוג<select name="type"><option value="expense">הוצאה</option><option value="income">הכנסה</option></select></label></div><div class="form-row"><label>קטגוריה<select name="category"><option>אוכל</option><option>תחבורה</option><option>בילויים</option><option>מנויים</option><option>קניות</option><option>חשבונות</option><option>בריאות</option><option>דיור</option><option>משכורת</option><option>אחר</option></select></label><label>תאריך<input name="date" type="date" required></label></div><button class="primary full" type="submit">שמירת תנועה</button></form></div></div>
+<div class="toast" id="toast" role="status"></div>
+<script src="app.js"></script>
+</body></html>

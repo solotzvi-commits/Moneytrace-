@@ -1,0 +1,21 @@
+{
+  "name": "moneytrace-app",
+  "version": "0.3.0",
+  "private": true,
+  "description": "MONEYTRACE personal finance tracker",
+  "scripts": {
+    "sync": "npx cap sync",
+    "android": "npx cap open android",
+    "ios": "npx cap open ios",
+    "assets": "npx capacitor-assets generate"
+  },
+  "dependencies": {
+    "@capacitor/core": "^7.4.3"
+  },
+  "devDependencies": {
+    "@capacitor/cli": "^7.4.3",
+    "@capacitor/android": "^7.4.3",
+    "@capacitor/ios": "^7.4.3",
+    "@capacitor/assets": "^3.0.5"
+  }
+}
