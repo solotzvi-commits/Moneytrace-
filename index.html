@@ -56,6 +56,15 @@
       <div class="section-intro"><div><h2>חיבור חשבון בנק</h2><p>ייבוא מאובטח של תנועות כדי לקבל תמונה פיננסית מלאה.</p></div><span class="soft-badge">בפיתוח</span></div>
       <article class="panel connect-hero"><div class="connect-icon">⌁</div><div><h3>חיבור בנק אמיתי — השלב הבא</h3><p>כדי להתחבר לבנקים בישראל נדרש לעבוד עם ספק שירות מידע פיננסי בעל רישיון מתאים, לקבל הסכמה מפורשת מהמשתמש ולהשתמש בתהליך ההזדהות המאובטח של הבנק.</p><p>לא נבקש ממך סיסמה או קוד חד־פעמי, ולא נבצע פעולות בחשבון.</p></div></article>
       <div class="bank-grid"><div class="bank-card"><b>ייבוא CSV</b><small>זמין עכשיו · העלאת קובץ תנועות מהבנק</small><button class="secondary" id="connectCsv">ייבוא קובץ</button></div><div class="bank-card"><b>Open Banking</b><small>דורש הסכם מסחרי, ספק מורשה ובדיקות אבטחה</small><button class="secondary" id="providerInfo">פרטי האינטגרציה</button></div></div>
+      <article class="panel" style="margin-bottom:15px">
+        <div class="panel-heading"><div><h3>חשבון MONEYTRACE וסנכרון</h3><p id="cloudStatus">עדיין לא מחובר לחשבון ענן.</p></div></div>
+        <form id="authForm" style="display:grid;gap:12px;max-width:440px">
+          <label style="display:grid;gap:7px">כתובת אימייל<input id="authEmail" type="email" required autocomplete="email" placeholder="name@example.com"></label>
+          <label style="display:grid;gap:7px">סיסמה<input id="authPassword" type="password" required minlength="8" autocomplete="current-password" placeholder="לפחות 8 תווים"></label>
+          <div style="display:flex;gap:9px;flex-wrap:wrap"><button class="primary" id="authSubmit" type="submit">התחברות</button><button class="secondary" id="authSignup" type="button">יצירת חשבון</button><button class="secondary hidden" id="authLogout" type="button">התנתקות</button></div>
+        </form>
+        <p class="hint">ההרשמה דורשת אימות אימייל. לאחר התחברות, התנועות בחשבון יסונכרנו לענן. לעולם אל תשתף את הסיסמה שלך.</p>
+      </article>
       <div class="notice"><b>פרטיות ואבטחה</b><p>בגרסה הנוכחית המידע נשמר מקומית בדפדפן שלך. אין שרת, אין חיבור לבנק ואין העברת מידע החוצה. לפני השקה ציבורית נוסיף הצפנה, ניהול הרשאות, מחיקה מלאה ומדיניות פרטיות.</p></div>
     </section>
   </main>
@@ -63,5 +72,7 @@
 <nav class="mobile-nav"><button class="active" data-view="overview">◫<small>סקירה</small></button><button data-view="transactions">↕<small>תנועות</small></button><button data-view="subscriptions">⟳<small>מנויים</small></button><button data-view="insights">✧<small>תובנות</small></button><button data-view="connect">⌁<small>בנק</small></button></nav>
 <div class="modal-backdrop hidden" id="modal"><div class="modal"><button class="modal-close" id="closeModal">×</button><h3>הוספת תנועה</h3><form id="transactionForm"><label>תיאור<input name="description" required placeholder="למשל: קניות בסופר"></label><div class="form-row"><label>סכום בש״ח<input name="amount" type="number" min="0.01" step="0.01" required></label><label>סוג<select name="type"><option value="expense">הוצאה</option><option value="income">הכנסה</option></select></label></div><div class="form-row"><label>קטגוריה<select name="category"><option>אוכל</option><option>תחבורה</option><option>בילויים</option><option>מנויים</option><option>קניות</option><option>חשבונות</option><option>בריאות</option><option>דיור</option><option>משכורת</option><option>אחר</option></select></label><label>תאריך<input name="date" type="date" required></label></div><button class="primary full" type="submit">שמירת תנועה</button></form></div></div>
 <div class="toast" id="toast" role="status"></div>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="supabase-config.js"></script>
 <script src="app.js"></script>
 </body></html>

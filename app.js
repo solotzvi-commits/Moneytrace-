@@ -17,7 +17,7 @@ const demo=[
 function isoDaysAgo(n){const d=new Date();d.setDate(d.getDate()-n);return d.toISOString().slice(0,10)}
 let transactions=load();let isDemo=!localStorage.getItem(KEY);
 function load(){try{const x=localStorage.getItem(KEY);return x?JSON.parse(x):demo.map(t=>({...t}))}catch{return demo.map(t=>({...t}))}}
-function save(){localStorage.setItem(KEY,JSON.stringify(transactions));isDemo=false;$('#dataMode').textContent='הנתונים שלך'}
+function save(){localStorage.setItem(KEY,JSON.stringify(transactions));isDemo=false;$('#dataMode').textContent='הנתונים שלך';if(window.mtUser&&window.mtCloudSyncEnabled)syncAll().catch(()=>showToast('נשמר במכשיר; סנכרון הענן נכשל'))}
 const $=s=>document.querySelector(s);const money=n=>'₪'+Number(n||0).toLocaleString('he-IL',{minimumFractionDigits:2,maximumFractionDigits:2});
 const cats=['אוכל','תחבורה','בילויים','מנויים','קניות','חשבונות','בריאות','דיור','משכורת','אחר'];
 function esc(s){return String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
@@ -39,7 +39,7 @@ function go(view){document.querySelectorAll('.view').forEach(x=>x.classList.togg
 document.querySelectorAll('[data-view]').forEach(b=>b.addEventListener('click',()=>go(b.dataset.view)));document.querySelectorAll('[data-go]').forEach(b=>b.addEventListener('click',()=>go(b.dataset.go)));
 function openModal(){const f=$('#transactionForm');f.date.value=new Date().toISOString().slice(0,10);$('#modal').classList.remove('hidden')}function closeModal(){$('#modal').classList.add('hidden')}
 $('#quickAdd').onclick=openModal;$('#addTransaction').onclick=openModal;$('#closeModal').onclick=closeModal;$('#modal').addEventListener('click',e=>{if(e.target.id==='modal')closeModal()});$('#transactionForm').addEventListener('submit',e=>{e.preventDefault();const f=e.target;transactions.push({id:Date.now(),description:f.description.value.trim(),amount:Number(f.amount.value),type:f.type.value,category:f.category.value,date:f.date.value});save();render();closeModal();f.reset();showToast('התנועה נשמרה בהצלחה')});
-document.addEventListener('click',e=>{const b=e.target.closest('.delete-row');if(b){transactions=transactions.filter(x=>String(x.id)!==b.dataset.id);save();render();showToast('התנועה נמחקה')}});
+document.addEventListener('click',async e=>{const b=e.target.closest('.delete-row');if(b){const id=b.dataset.id;transactions=transactions.filter(x=>String(x.id)!==id);save();if(window.mtUser)await window.mtSupabase.from('transactions').delete().eq('user_id',window.mtUser.id).eq('id',id);render();showToast('התנועה נמחקה')}});
 ['searchTransactions','typeFilter','categoryFilter'].forEach(id=>$('#'+id).addEventListener('input',()=>{$('#transactionRows').innerHTML=filtered().map(x=>rowHtml(x,true)).join('');$('#emptyTransactions').classList.toggle('hidden',filtered().length>0)}));
 $('#savingAmount').addEventListener('input',calcSaving);$('#savingPercent').addEventListener('input',calcSaving);function calcSaving(){const a=Number($('#savingAmount').value)||0,p=Number($('#savingPercent').value)||0;$('#savingPercentLabel').textContent=p+'%';$('#savingResult').textContent=money(a*p/100*12)}
 $('#csvInput').addEventListener('change',async e=>{const file=e.target.files[0];if(!file)return;try{const text=await file.text();const rows=parseCSV(text);if(!rows.length)throw Error('לא נמצאו שורות תקינות');transactions.push(...rows);save();render();showToast(`יובאו ${rows.length} תנועות בהצלחה`)}catch(err){showToast(err.message||'שגיאה בקריאת הקובץ')}e.target.value=''});$('#connectCsv').onclick=()=>$('#csvInput').click();
@@ -75,3 +75,45 @@ $('#backupInput').addEventListener('change',async e=>{
  }catch(err){showToast(err.message||'לא ניתן לשחזר את קובץ הגיבוי')}
  finally{e.target.value=''}
 });
+
+
+// Supabase authentication and per-user cloud sync.
+(function initCloud(){
+ const status=$('#cloudStatus'),form=$('#authForm'),email=$('#authEmail'),password=$('#authPassword');
+ if(!window.supabase||!window.MONEYTRACE_SUPABASE_URL||!window.MONEYTRACE_SUPABASE_PUBLISHABLE_KEY){status.textContent='שירות הענן לא נטען. בדוק חיבור לאינטרנט.';return}
+ const client=window.supabase.createClient(window.MONEYTRACE_SUPABASE_URL,window.MONEYTRACE_SUPABASE_PUBLISHABLE_KEY);
+ window.mtSupabase=client;window.mtUser=null;window.mtCloudSyncEnabled=false;
+ const logout=$('#authLogout'),submit=$('#authSubmit'),signup=$('#authSignup');
+ function setSignedIn(user){window.mtUser=user;window.mtCloudSyncEnabled=false;const logged=!!user;status.textContent=logged?'מחובר לחשבון. בודק נתונים…':'עדיין לא מחובר לחשבון ענן.';email.disabled=logged;password.disabled=logged;submit.classList.toggle('hidden',logged);signup.classList.toggle('hidden',logged);logout.classList.toggle('hidden',!logged)}
+ async function syncAll(){if(!window.mtUser||!window.mtCloudSyncEnabled)return;const rows=transactions.map(t=>({id:String(t.id),user_id:window.mtUser.id,description:String(t.description),category:String(t.category||'אחר'),date:t.date,type:t.type,amount:Number(t.amount)}));if(rows.length){const {error}=await client.from('transactions').upsert(rows,{onConflict:'id'});if(error)throw error}status.textContent='מחובר כ־'+window.mtUser.email+' · הסנכרון פעיל';}
+ window.syncAll=syncAll;
+ async function loadCloud(user){
+  if(window.mtLoadingUser===user.id)return;
+  window.mtLoadingUser=user.id;
+  setSignedIn(user);status.textContent='מתחבר ובודק את נתוני הענן…';
+  try{
+   const {data:remote,error}=await client.from('transactions').select('id,description,category,date,type,amount').eq('user_id',user.id);
+   if(error)throw error;
+   const localRows=isDemo?[]:transactions.slice();
+   if(remote&&remote.length){
+    // Keep a local safety snapshot, but never merge another account's local data into this account.
+    if(localRows.length)localStorage.setItem('moneytrace_precloud_backup_v1',JSON.stringify(localRows));
+    transactions=remote.map(r=>({id:r.id,description:r.description,category:r.category,date:r.date,type:r.type,amount:Number(r.amount)}));
+    localStorage.setItem(KEY,JSON.stringify(transactions));isDemo=false;window.mtCloudSyncEnabled=true;render();
+    status.textContent='מחובר כ־'+user.email+' · הנתונים נטענו מהענן';
+   }else if(localRows.length){
+    const shouldUpload=confirm('בחשבון הענן הזה עדיין אין תנועות. נמצאו '+localRows.length+' תנועות מקומיות במכשיר. להעביר אותן לחשבון הענן הזה?');
+    if(shouldUpload){window.mtCloudSyncEnabled=true;await syncAll();status.textContent='מחובר כ־'+user.email+' · התנועות המקומיות הועלו לענן';}
+    else{window.mtCloudSyncEnabled=false;status.textContent='מחובר כ־'+user.email+' · התנועות נשארו במכשיר ולא סונכרנו. כדי למנוע ערבוב נתונים, הסנכרון מושהה.';}
+   }else{
+    transactions=[];localStorage.setItem(KEY,JSON.stringify(transactions));isDemo=false;window.mtCloudSyncEnabled=true;render();status.textContent='מחובר כ־'+user.email+' · אפשר להתחיל להוסיף תנועות';
+   }
+  }catch(e){window.mtCloudSyncEnabled=false;status.textContent='התחברת, אך טעינת הענן נכשלה: '+e.message;}
+  finally{window.mtLoadingUser=null;}
+ }
+ form.addEventListener('submit',async e=>{e.preventDefault();submit.disabled=true;try{const {data,error}=await client.auth.signInWithPassword({email:email.value.trim(),password:password.value});if(error)throw error;if(data.user)await loadCloud(data.user)}catch(err){status.textContent='שגיאת התחברות: '+err.message}finally{submit.disabled=false}});
+ signup.addEventListener('click',async()=>{if(!email.value.trim()||password.value.length<8){status.textContent='הזן אימייל וסיסמה של לפחות 8 תווים.';return}signup.disabled=true;try{const {data,error}=await client.auth.signUp({email:email.value.trim(),password:password.value,options:{emailRedirectTo:'https://solotzvi-commits.github.io/Moneytrace-/'}});if(error)throw error;if(data.session&&data.user)await loadCloud(data.user);else status.textContent='נשלח אליך אימייל לאימות. פתח אותו ואז חזור לאתר והתחבר.'}catch(err){status.textContent='שגיאת הרשמה: '+err.message}finally{signup.disabled=false}});
+ logout.addEventListener('click',async()=>{window.mtCloudSyncEnabled=false;const {error}=await client.auth.signOut();if(error){status.textContent='שגיאה בהתנתקות: '+error.message;return}setSignedIn(null);showToast('התנתקת מהחשבון')});
+ client.auth.onAuthStateChange((event,session)=>{if(event==='SIGNED_IN'&&session?.user&&window.mtUser?.id!==session.user.id)loadCloud(session.user);if(event==='SIGNED_OUT'){window.mtCloudSyncEnabled=false;setSignedIn(null)}});
+ client.auth.getSession().then(({data,error})=>{if(error){status.textContent='לא ניתן לבדוק התחברות: '+error.message;return}if(data.session?.user)loadCloud(data.session.user);else setSignedIn(null)});
+})();
