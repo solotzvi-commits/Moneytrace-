@@ -51,3 +51,27 @@ $('#providerInfo').onclick=()=>showToast('שלב הבא: בדיקת ספק Open 
 $('#todayLabel').textContent=new Intl.DateTimeFormat('he-IL',{weekday:'long',day:'numeric',month:'long'}).format(new Date());
 if('serviceWorker'in navigator&&location.protocol.startsWith('http'))navigator.serviceWorker.register('./sw.js').catch(()=>{});
 render();calcSaving();
+
+
+// Full local backup and restore. No data is uploaded to a server.
+$('#backupJson').addEventListener('click',()=>{
+ const payload={app:'MONEYTRACE',version:1,createdAt:new Date().toISOString(),transactions};
+ const blob=new Blob([JSON.stringify(payload,null,2)],{type:'application/json'});
+ const url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;a.download='moneytrace-backup-'+new Date().toISOString().slice(0,10)+'.json';a.click();
+ setTimeout(()=>URL.revokeObjectURL(url),1000);showToast('קובץ הגיבוי הורד למכשיר');
+});
+$('#backupInput').addEventListener('change',async e=>{
+ const file=e.target.files[0];if(!file)return;
+ try{
+  const data=JSON.parse(await file.text());
+  if(data.app!=='MONEYTRACE'||!Array.isArray(data.transactions))throw new Error('זה אינו קובץ גיבוי תקין של MONEYTRACE');
+  const restored=data.transactions.map((t,i)=>{
+   const amount=Number(t.amount);const date=String(t.date||'');
+   if(!t.description||!Number.isFinite(amount)||amount<0||!/^\d{4}-\d{2}-\d{2}$/.test(date)||!['income','expense'].includes(t.type))throw new Error('קובץ הגיבוי מכיל תנועה לא תקינה');
+   return{id:t.id??(Date.now()+i),description:String(t.description),category:String(t.category||'אחר'),date,type:t.type,amount};
+  });
+  if(!confirm('השחזור יחליף את כל התנועות הקיימות במכשיר. להמשיך?'))return;
+  transactions=restored;save();render();showToast('הגיבוי שוחזר בהצלחה');
+ }catch(err){showToast(err.message||'לא ניתן לשחזר את קובץ הגיבוי')}
+ finally{e.target.value=''}
+});

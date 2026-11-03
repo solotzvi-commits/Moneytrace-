@@ -37,9 +37,9 @@
     </section>
     <section id="view-transactions" class="view">
       <div class="section-intro"><div><h2>כל התנועות</h2><p>נהל את ההוצאות וההכנסות שלך במקום אחד.</p></div><div class="toolbar"><label class="upload-button">↑ ייבוא קובץ CSV<input id="csvInput" type="file" accept=".csv,text/csv"></label><button class="primary" id="addTransaction">＋ הוספת תנועה</button></div></div>
-      <div class="panel filter-panel"><input id="searchTransactions" class="search" placeholder="חיפוש לפי שם בית עסק…"><select id="typeFilter"><option value="all">כל התנועות</option><option value="expense">הוצאות</option><option value="income">הכנסות</option></select><select id="categoryFilter"><option value="all">כל הקטגוריות</option></select><button class="secondary" id="downloadCsv">↓ ייצוא CSV</button></div>
+      <div class="panel filter-panel"><input id="searchTransactions" class="search" placeholder="חיפוש לפי שם בית עסק…"><select id="typeFilter"><option value="all">כל התנועות</option><option value="expense">הוצאות</option><option value="income">הכנסות</option></select><select id="categoryFilter"><option value="all">כל הקטגוריות</option></select><button class="secondary" id="downloadCsv">↓ ייצוא CSV</button><button class="secondary" id="backupJson">גיבוי מלא</button><label class="upload-button">שחזור גיבוי<input id="backupInput" type="file" accept=".json,application/json"></label></div>
       <article class="panel"><div class="table-wrap"><table><thead><tr><th>תיאור</th><th>קטגוריה</th><th>תאריך</th><th>סוג</th><th>סכום</th><th></th></tr></thead><tbody id="transactionRows"></tbody></table></div><div class="empty hidden" id="emptyTransactions">לא נמצאו תנועות. אפשר לייבא קובץ CSV או להוסיף תנועה ידנית.</div></article>
-      <p class="hint">ייבוא CSV תומך בכותרות נפוצות בעברית ובאנגלית. הקובץ מעובד מקומית בדפדפן.</p>
+      <p class="hint">ייבוא CSV תומך בכותרות נפוצות בעברית ובאנגלית. גיבוי מלא שומר את כל התנועות בקובץ JSON שאפשר לשחזר במכשיר אחר. הקבצים מעובדים מקומית בדפדפן.</p>
     </section>
     <section id="view-subscriptions" class="view">
       <div class="section-intro"><div><h2>מנויים ותשלומים חוזרים</h2><p>מצא חיובים שחוזרים על עצמם כדי שלא תשלם על מה ששכחת.</p></div><span class="soft-badge">זיהוי לפי היסטוריית תנועות</span></div>
