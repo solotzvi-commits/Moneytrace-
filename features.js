@@ -48,3 +48,74 @@ $('#modal').addEventListener('click',e=>{if(e.target.id==='modal'&&editing!==nul
 const oldRender=window.render;if(typeof oldRender==='function')window.render=function(){oldRender();renderBudgets()};
 renderBudgets();renderGoals();
 })();
+/* SMART SAVINGS: weekly estimated savings, savings destinations and personalized ideas. */
+(() => {
+  const $ = s => document.querySelector(s);
+  const cash = n => '₪' + Math.round(Number(n||0)).toLocaleString('he-IL');
+  const read = (k,d) => { try { return JSON.parse(localStorage.getItem(k)) ?? d; } catch { return d; } };
+  let goals = read('moneytrace_goals_v1', []);
+  const saveGoals = () => localStorage.setItem('moneytrace_goals_v1', JSON.stringify(goals));
+  const poolKey='moneytrace_savings_pool_v1', ledgerKey='moneytrace_savings_ledger_v1';
+  let pool=Number(localStorage.getItem(poolKey)||0), ledger=read(ledgerKey,[]);
+  const today=new Date(); today.setHours(0,0,0,0);
+  const dayKey=d=>d.toISOString().slice(0,10);
+  const parseDate=s=>{const d=new Date(String(s)+'T12:00:00');return isNaN(d)?null:d};
+  const daysAgo=n=>{const d=new Date(today);d.setDate(d.getDate()-n);return d};
+  const weekStart=d=>{const x=new Date(d);x.setDate(x.getDate()-((x.getDay()+6)%7));x.setHours(0,0,0,0);return x};
+  const spend=(from,to,filter)=>transactions.filter(t=>t.type==='expense'&&parseDate(t.date)>=from&&parseDate(t.date)<to&&(!filter||filter(t))).reduce((s,t)=>s+Number(t.amount||0),0);
+  const addToDestination=amount=>{
+    if(!(amount>0))return;
+    const dest=localStorage.getItem('moneytrace_savings_destination_v1')||'pool';
+    if(dest==='pool'||!goals.some(g=>String(g.id)===dest)){pool+=amount;localStorage.setItem(poolKey,String(pool));}
+    else {const g=goals.find(x=>String(x.id)===dest);g.saved=Number(g.saved||0)+amount;saveGoals();}
+  };
+  // Completed week compared with the preceding four weeks, category by category.
+  const calculateLastWeek=()=>{
+    const end=weekStart(today), start=new Date(end);start.setDate(start.getDate()-7);
+    const baseStart=new Date(start);baseStart.setDate(baseStart.getDate()-28);
+    const cats=[...new Set(transactions.filter(t=>t.type==='expense').map(t=>t.category||'אחר'))];
+    const changes=[];
+    cats.forEach(cat=>{
+      const baseline=spend(baseStart,start,t=>(t.category||'אחר')===cat)/4;
+      const recent=spend(start,end,t=>(t.category||'אחר')===cat);
+      if(baseline>=50&&recent<baseline-10)changes.push({name:cat,amount:Math.round(baseline-recent),baseline:Math.round(baseline),recent:Math.round(recent)});
+    });
+    return {start,end,changes,total:changes.reduce((s,x)=>s+x.amount,0)};
+  };
+  const opportunities=()=>{
+    const from=daysAgo(35),to=daysAgo(7);
+    const cats=[...new Set(transactions.filter(t=>t.type==='expense').map(t=>t.category||'אחר'))];
+    return cats.map(name=>{const weekly=spend(from,to,t=>(t.category||'אחר')===name)/4;return{name,monthly:Math.round(weekly*.15*4),suggestion:`נסה לצמצם כ־15% מההוצאות בקטגוריית ${name}`};}).filter(x=>x.monthly>=15).sort((a,b)=>b.monthly-a.monthly).slice(0,3);
+  };
+  const showReport=record=>{
+    let modal=$('#smartSavingsReport');if(!modal){modal=document.createElement('div');modal.id='smartSavingsReport';modal.style.cssText='position:fixed;inset:0;background:#000b;z-index:99999;display:flex;align-items:center;justify-content:center;padding:18px';document.body.appendChild(modal);}
+    const r=record||{total:0,changes:[]};
+    modal.innerHTML=`<div style="background:#142235;color:#fff;border:1px solid #34445b;border-radius:18px;padding:20px;width:min(440px,100%);max-height:80vh;overflow:auto"><div style="display:flex;justify-content:space-between;align-items:center"><h2 style="margin:0">החיסכון השבועי שלך</h2><button id="closeSavingsReport" class="edit-row">סגירה ✕</button></div><div style="font-size:32px;font-weight:800;color:#55d6a5;margin:16px 0">${cash(r.total)}</div><p style="color:#aab7ca;font-size:12px">אומדן לפי השוואת הוצאות בשבוע שהסתיים לממוצע ארבעת השבועות שקדמו לו.</p>${r.changes?.length?r.changes.map(x=>`<div style="display:flex;justify-content:space-between;padding:9px 0;border-top:1px solid #293951"><span>${x.name}<small style="display:block;color:#aab7ca">ממוצע שבועי ${cash(x.baseline)} · בפועל ${cash(x.recent)}</small></span><b style="color:#55d6a5">+${cash(x.amount)}</b></div>`).join(''):'<p>עדיין אין ירידה בהוצאות שניתן לזהות. נמשיך לעקוב!</p>'}<p style="color:#aab7ca;font-size:11px;margin-top:12px">זהו אומדן על בסיס התנועות שנרשמו, ולא אימות של כסף שנשאר בחשבון. הוצאות שלא הוזנו עלולות להשפיע על התוצאה.</p></div>`;
+    $('#closeSavingsReport').onclick=()=>modal.remove();
+  };
+  const processWeek=()=>{
+    const id=dayKey(weekStart(today));if(localStorage.getItem('moneytrace_last_processed_week_v1')===id)return;
+    const r=calculateLastWeek(),record={week:id,total:r.total,changes:r.changes};
+    ledger.push(record);ledger=ledger.slice(-26);localStorage.setItem(ledgerKey,JSON.stringify(ledger));
+    if(r.total>0){addToDestination(r.total);showReport(record);}
+    localStorage.setItem('moneytrace_last_processed_week_v1',id);
+  };
+  const ensurePanel=()=>{
+    let el=$('#smartSavingsPanel');if(el)return el;
+    el=document.createElement('article');el.id='smartSavingsPanel';el.className='feature-card';el.style.margin='14px 0';
+    const host=$('#view-overview');if(host)host.appendChild(el);return el;
+  };
+  const renderPanel=()=>{
+    const el=ensurePanel();if(!el)return;
+    const opts=goals.map(g=>`<option value="${String(g.id).replace(/"/g,'&quot;')}">${String(g.name).replace(/[&<>]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]))}</option>`).join('');
+    const opp=opportunities();
+    el.innerHTML=`<div style="display:flex;justify-content:space-between;gap:10px;align-items:center"><h3 style="margin:0">💡 הזדמנויות לחיסכון</h3><b>${cash(pool)} בקופה הכללית</b></div><p style="color:#aab7ca;font-size:11px">הצעות לפי ההוצאות שנרשמו באפליקציה. הסכומים הם פוטנציאל משוער, לא כסף שכבר נחסך.</p>${opp.length?opp.map(x=>`<div style="display:flex;justify-content:space-between;gap:10px;padding:9px 0;border-top:1px solid #293951"><div><b>${x.name}</b><div style="color:#aab7ca;font-size:11px">${x.suggestion}</div></div><b style="color:#55d6a5;white-space:nowrap">${cash(x.monthly)} / חודש</b></div>`).join(''):'<p style="color:#aab7ca;font-size:12px">נאסוף עוד נתוני הוצאות כדי להציע דרכים אישיות לחסוך.</p>'}<label style="display:block;color:#aab7ca;font-size:11px;margin-top:12px">לאן להוסיף חיסכון שיזוהה אוטומטית?</label><select id="savingsDestination" style="width:100%;margin-top:6px;padding:10px;border-radius:10px"><option value="pool">קופת חיסכון כללית</option>${opts}</select><button id="showSavingsReport" class="secondary" style="margin-top:10px">הצג דוח שבועי אחרון</button>`;
+    const sel=$('#savingsDestination');sel.value=localStorage.getItem('moneytrace_savings_destination_v1')||'pool';sel.onchange=()=>localStorage.setItem('moneytrace_savings_destination_v1',sel.value);
+    $('#showSavingsReport').onclick=()=>showReport(ledger[ledger.length-1]||null);
+  };
+  const renderPool=()=>{
+    const view=$('#view-goals');if(!view)return;let card=$('#smartPoolCard');if(!card){card=document.createElement('article');card.id='smartPoolCard';card.className='feature-card';view.insertBefore(card,view.children[1]||null);}card.innerHTML=`<h3>קופת חיסכון כללית</h3><div style="font-size:26px;font-weight:800;color:#55d6a5">${cash(pool)}</div><p style="color:#aab7ca;font-size:11px">אומדן חיסכון שנוסף אוטומטית בעקבות ירידה בהוצאות שנרשמו.</p>`;
+  };
+  const init=()=>{processWeek();renderPanel();renderPool();};
+  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',init);else init();
+})();
