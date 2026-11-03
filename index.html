@@ -7,7 +7,24 @@
   <title>MONEYTRACE — לאן הכסף נעלם?</title>
 </head>
 <body>
-<div class="app-shell">
+
+<!-- Authentication gate: the financial dashboard stays hidden until a user signs in. -->
+<section id="loginGate" dir="rtl" style="min-height:100svh;display:flex;align-items:center;justify-content:center;padding:24px;background:radial-gradient(circle at 50% 0%,#182943 0,#090e19 55%);color:#f4f7fb;font-family:system-ui,-apple-system,Segoe UI,sans-serif">
+  <div style="width:min(100%,420px);background:#111a2a;border:1px solid #26364d;border-radius:24px;padding:28px;box-shadow:0 24px 80px #0006">
+    <div style="text-align:center;margin-bottom:26px"><div style="width:58px;height:58px;border-radius:18px;background:#173e35;color:#6ee7b7;display:grid;place-items:center;font-size:30px;font-weight:800;margin:0 auto 14px">M</div><h1 style="font-size:27px;letter-spacing:1px;margin:0">MONEYTRACE</h1><p style="color:#aab8cb;margin:8px 0 0">הכסף שלך. בשליטה שלך.</p></div>
+    <h2 style="font-size:20px;margin:0 0 8px">ברוך הבא</h2><p style="color:#aab8cb;margin:0 0 20px">התחבר כדי להיכנס למרכז הפיננסי האישי שלך.</p>
+    <form id="loginGateForm" style="display:grid;gap:13px">
+      <label style="display:grid;gap:7px;color:#dce5f1">כתובת אימייל<input id="gateEmail" type="email" required autocomplete="email" placeholder="name@example.com" style="box-sizing:border-box;width:100%;padding:14px;border:1px solid #34445b;border-radius:12px;background:#0b1220;color:#fff;font:inherit"></label>
+      <label style="display:grid;gap:7px;color:#dce5f1">סיסמה<input id="gatePassword" type="password" required minlength="8" autocomplete="current-password" placeholder="לפחות 8 תווים" style="box-sizing:border-box;width:100%;padding:14px;border:1px solid #34445b;border-radius:12px;background:#0b1220;color:#fff;font:inherit"></label>
+      <button id="gateLogin" type="submit" style="border:0;border-radius:12px;padding:14px;background:#21a879;color:#061a13;font:inherit;font-weight:800">התחברות</button>
+      <button id="gateSignup" type="button" style="border:1px solid #40536d;border-radius:12px;padding:13px;background:transparent;color:#e7eef8;font:inherit;font-weight:700">יצירת חשבון חדש</button>
+    </form>
+    <p id="gateStatus" role="status" aria-live="polite" style="min-height:24px;color:#aab8cb;line-height:1.5;margin:16px 0 0;text-align:center">נדרשת התחברות כדי להמשיך.</p>
+    <p style="font-size:12px;color:#8191a8;text-align:center;margin:14px 0 0">הנתונים הפיננסיים שלך זמינים רק לאחר התחברות לחשבון.</p>
+  </div>
+</section>
+
+<div class="app-shell" id="mainApp" style="display:none">
   <aside class="sidebar">
     <a class="brand" href="#overview"><span class="brand-mark">M</span><span>MONEYTRACE<small>הכסף שלך. בשליטה שלך.</small></span></a>
     <nav>
@@ -17,7 +34,7 @@
       <button class="nav-item" data-view="insights"><span>✧</span> תובנות וחיסכון</button>
       <button class="nav-item" data-view="connect"><span>⌁</span> חיבור חשבון</button>
     </nav>
-    <div class="sidebar-bottom"><div class="secure"><span class="secure-icon">✓</span><div><b>הפרטיות שלך חשובה</b><small>הנתונים נשמרים במכשיר שלך</small></div></div><small class="version">גרסת בטא · 0.2</small></div>
+    <div class="sidebar-bottom"><div class="secure"><span class="secure-icon">✓</span><div><b>הפרטיות שלך חשובה</b><small>הנתונים נשמרים במכשיר שלך</small></div></div><small class="version">גרסת בטא · 0.3</small></div>
   </aside>
   <main class="main">
     <header class="topbar"><div><div class="eyebrow" id="todayLabel">המרכז הפיננסי שלך</div><h1 id="pageTitle">סקירה כללית</h1></div><div class="top-actions"><span class="demo-pill" id="dataMode">נתוני הדגמה</span><button class="avatar" aria-label="פרופיל">צ</button></div></header>
@@ -63,13 +80,13 @@
           <label style="display:grid;gap:7px">סיסמה<input id="authPassword" type="password" required minlength="8" autocomplete="current-password" placeholder="לפחות 8 תווים"></label>
           <div style="display:flex;gap:9px;flex-wrap:wrap"><button class="primary" id="authSubmit" type="submit">התחברות</button><button class="secondary" id="authSignup" type="button">יצירת חשבון</button><button class="secondary hidden" id="authLogout" type="button">התנתקות</button></div>
         </form>
-        <p class="hint">ההרשמה דורשת אימות אימייל. לאחר התחברות, התנועות בחשבון יסונכרנו לענן. לעולם אל תשתף את הסיסמה שלך.</p>
+        <p class="hint">ההרשמה דורשת אימות אימייל. לאחר התחברות, התנועות נטענות מהענן. שינויים נשמרים בענן, והאפליקציה בודקת עדכונים ממכשירים אחרים בערך כל 15 שניות. לעולם אל תשתף את הסיסמה שלך.</p>
       </article>
-      <div class="notice"><b>פרטיות ואבטחה</b><p>בגרסה הנוכחית המידע נשמר מקומית בדפדפן שלך. אין שרת, אין חיבור לבנק ואין העברת מידע החוצה. לפני השקה ציבורית נוסיף הצפנה, ניהול הרשאות, מחיקה מלאה ומדיניות פרטיות.</p></div>
+      <div class="notice"><b>פרטיות ואבטחה</b><p>תנועות בחשבון מחובר נשמרות ב־Supabase ומבודדות לפי משתמש באמצעות הרשאות RLS. ללא התחברות, הנתונים נשמרים מקומית בדפדפן. אין עדיין חיבור ישיר לבנק. לפני השקה ציבורית נדרשות בדיקות אבטחה, מדיניות פרטיות ותהליך מחיקה מלא.</p></div>
     </section>
   </main>
 </div>
-<nav class="mobile-nav"><button class="active" data-view="overview">◫<small>סקירה</small></button><button data-view="transactions">↕<small>תנועות</small></button><button data-view="subscriptions">⟳<small>מנויים</small></button><button data-view="insights">✧<small>תובנות</small></button><button data-view="connect">⌁<small>בנק</small></button></nav>
+<nav class="mobile-nav" id="mainMobileNav" style="display:none"><button class="active" data-view="overview">◫<small>סקירה</small></button><button data-view="transactions">↕<small>תנועות</small></button><button data-view="subscriptions">⟳<small>מנויים</small></button><button data-view="insights">✧<small>תובנות</small></button><button data-view="connect">⌁<small>בנק</small></button></nav>
 <div class="modal-backdrop hidden" id="modal"><div class="modal"><button class="modal-close" id="closeModal">×</button><h3>הוספת תנועה</h3><form id="transactionForm"><label>תיאור<input name="description" required placeholder="למשל: קניות בסופר"></label><div class="form-row"><label>סכום בש״ח<input name="amount" type="number" min="0.01" step="0.01" required></label><label>סוג<select name="type"><option value="expense">הוצאה</option><option value="income">הכנסה</option></select></label></div><div class="form-row"><label>קטגוריה<select name="category"><option>אוכל</option><option>תחבורה</option><option>בילויים</option><option>מנויים</option><option>קניות</option><option>חשבונות</option><option>בריאות</option><option>דיור</option><option>משכורת</option><option>אחר</option></select></label><label>תאריך<input name="date" type="date" required></label></div><button class="primary full" type="submit">שמירת תנועה</button></form></div></div>
 <div class="toast" id="toast" role="status"></div>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>

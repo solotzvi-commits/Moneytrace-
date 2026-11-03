@@ -1,4 +1,5 @@
-const KEY='moneytrace_transactions_v1';
+let KEY='moneytrace_transactions_v1';
+function newTransactionId(){return 'mt_'+(window.mtUser?.id||'local')+'_'+(crypto.randomUUID?crypto.randomUUID():Date.now()+'_'+Math.random().toString(36).slice(2))}
 const colors=['#55d6a5','#8ba7ff','#f1b86b','#c19bff','#f17e86','#59c6d6','#a6c66b','#df9dca'];
 const demo=[
  {id:1,description:'שופרסל',category:'אוכל',date:isoDaysAgo(1),type:'expense',amount:286.4},
@@ -38,12 +39,12 @@ function showToast(s){const el=$('#toast');el.textContent=s;el.classList.add('sh
 function go(view){document.querySelectorAll('.view').forEach(x=>x.classList.toggle('active',x.id==='view-'+view));document.querySelectorAll('[data-view]').forEach(x=>x.classList.toggle('active',x.dataset.view===view));const names={overview:'סקירה כללית',transactions:'תנועות',subscriptions:'מנויים ותשלומים',insights:'תובנות וחיסכון',connect:'חיבור חשבון'};$('#pageTitle').textContent=names[view];render()}
 document.querySelectorAll('[data-view]').forEach(b=>b.addEventListener('click',()=>go(b.dataset.view)));document.querySelectorAll('[data-go]').forEach(b=>b.addEventListener('click',()=>go(b.dataset.go)));
 function openModal(){const f=$('#transactionForm');f.date.value=new Date().toISOString().slice(0,10);$('#modal').classList.remove('hidden')}function closeModal(){$('#modal').classList.add('hidden')}
-$('#quickAdd').onclick=openModal;$('#addTransaction').onclick=openModal;$('#closeModal').onclick=closeModal;$('#modal').addEventListener('click',e=>{if(e.target.id==='modal')closeModal()});$('#transactionForm').addEventListener('submit',e=>{e.preventDefault();const f=e.target;transactions.push({id:Date.now(),description:f.description.value.trim(),amount:Number(f.amount.value),type:f.type.value,category:f.category.value,date:f.date.value});save();render();closeModal();f.reset();showToast('התנועה נשמרה בהצלחה')});
-document.addEventListener('click',async e=>{const b=e.target.closest('.delete-row');if(b){const id=b.dataset.id;transactions=transactions.filter(x=>String(x.id)!==id);save();if(window.mtUser)await window.mtSupabase.from('transactions').delete().eq('user_id',window.mtUser.id).eq('id',id);render();showToast('התנועה נמחקה')}});
+$('#quickAdd').onclick=openModal;$('#addTransaction').onclick=openModal;$('#closeModal').onclick=closeModal;$('#modal').addEventListener('click',e=>{if(e.target.id==='modal')closeModal()});$('#transactionForm').addEventListener('submit',e=>{e.preventDefault();const f=e.target;transactions.push({id:newTransactionId(),description:f.description.value.trim(),amount:Number(f.amount.value),type:f.type.value,category:f.category.value,date:f.date.value});save();render();closeModal();f.reset();showToast('התנועה נשמרה בהצלחה')});
+document.addEventListener('click',async e=>{const b=e.target.closest('.delete-row');if(b){const id=b.dataset.id;transactions=transactions.filter(x=>String(x.id)!==id);save();if(window.mtUser&&window.mtCloudSyncEnabled){const {error}=await window.mtSupabase.from('transactions').delete().eq('user_id',window.mtUser.id).eq('id',id);if(error)showToast('נמחק מהמכשיר, אך המחיקה בענן נכשלה: '+error.message)}render();showToast('התנועה נמחקה')}});
 ['searchTransactions','typeFilter','categoryFilter'].forEach(id=>$('#'+id).addEventListener('input',()=>{$('#transactionRows').innerHTML=filtered().map(x=>rowHtml(x,true)).join('');$('#emptyTransactions').classList.toggle('hidden',filtered().length>0)}));
 $('#savingAmount').addEventListener('input',calcSaving);$('#savingPercent').addEventListener('input',calcSaving);function calcSaving(){const a=Number($('#savingAmount').value)||0,p=Number($('#savingPercent').value)||0;$('#savingPercentLabel').textContent=p+'%';$('#savingResult').textContent=money(a*p/100*12)}
 $('#csvInput').addEventListener('change',async e=>{const file=e.target.files[0];if(!file)return;try{const text=await file.text();const rows=parseCSV(text);if(!rows.length)throw Error('לא נמצאו שורות תקינות');transactions.push(...rows);save();render();showToast(`יובאו ${rows.length} תנועות בהצלחה`)}catch(err){showToast(err.message||'שגיאה בקריאת הקובץ')}e.target.value=''});$('#connectCsv').onclick=()=>$('#csvInput').click();
-function parseCSV(text){const lines=text.replace(/^\uFEFF/,'').split(/\r?\n/).filter(x=>x.trim());if(lines.length<2)throw Error('הקובץ ריק או חסרות בו שורות');const delim=(lines[0].match(/;/g)||[]).length>(lines[0].match(/,/g)||[]).length?';':',';const parseLine=line=>{const out=[];let cur='',q=false;for(let i=0;i<line.length;i++){const c=line[i];if(c==='"'&&line[i+1]==='"'&&q){cur+='"';i++}else if(c==='"')q=!q;else if(c===delim&&!q){out.push(cur.trim());cur=''}else cur+=c}out.push(cur.trim());return out};const heads=parseLine(lines[0]).map(x=>x.toLowerCase());const find=names=>heads.findIndex(h=>names.some(n=>h.includes(n)));const iDesc=find(['תיאור','שם בית עסק','בית עסק','description','merchant','details','name']);const iDate=find(['תאריך','date','תאריך עסקה']);const iAmount=find(['סכום','amount','חיוב','זכות']);const iType=find(['סוג','type','debit/credit']);const iCat=find(['קטגוריה','category']);if(iDesc<0||iDate<0||iAmount<0)throw Error('נדרשות עמודות תיאור, תאריך וסכום (אפשר גם באנגלית)');return lines.slice(1).map((line,i)=>{const c=parseLine(line);let raw=(c[iAmount]||'').replace(/[₪,\s]/g,'');let amount=Number(raw);if(!Number.isFinite(amount)||!c[iDesc]||!c[iDate])return null;const date=parseDate(c[iDate]);if(!date)return null;let type=(c[iType]||'').toLowerCase();const isIncome=/הכנסה|זכות|credit|income/.test(type)||amount<0;amount=Math.abs(amount);const desc=c[iDesc];return{id:Date.now()+i,description:desc,category:iCat>=0&&c[iCat]?c[iCat]:guessCategory(desc),date,type:isIncome?'income':'expense',amount}}).filter(Boolean)}
+function parseCSV(text){const lines=text.replace(/^\uFEFF/,'').split(/\r?\n/).filter(x=>x.trim());if(lines.length<2)throw Error('הקובץ ריק או חסרות בו שורות');const delim=(lines[0].match(/;/g)||[]).length>(lines[0].match(/,/g)||[]).length?';':',';const parseLine=line=>{const out=[];let cur='',q=false;for(let i=0;i<line.length;i++){const c=line[i];if(c==='"'&&line[i+1]==='"'&&q){cur+='"';i++}else if(c==='"')q=!q;else if(c===delim&&!q){out.push(cur.trim());cur=''}else cur+=c}out.push(cur.trim());return out};const heads=parseLine(lines[0]).map(x=>x.toLowerCase());const find=names=>heads.findIndex(h=>names.some(n=>h.includes(n)));const iDesc=find(['תיאור','שם בית עסק','בית עסק','description','merchant','details','name']);const iDate=find(['תאריך','date','תאריך עסקה']);const iAmount=find(['סכום','amount','חיוב','זכות']);const iType=find(['סוג','type','debit/credit']);const iCat=find(['קטגוריה','category']);if(iDesc<0||iDate<0||iAmount<0)throw Error('נדרשות עמודות תיאור, תאריך וסכום (אפשר גם באנגלית)');return lines.slice(1).map((line,i)=>{const c=parseLine(line);let raw=(c[iAmount]||'').replace(/[₪,\s]/g,'');let amount=Number(raw);if(!Number.isFinite(amount)||!c[iDesc]||!c[iDate])return null;const date=parseDate(c[iDate]);if(!date)return null;let type=(c[iType]||'').toLowerCase();const isIncome=/הכנסה|זכות|credit|income/.test(type)||amount<0;amount=Math.abs(amount);const desc=c[iDesc];return{id:newTransactionId(),description:desc,category:iCat>=0&&c[iCat]?c[iCat]:guessCategory(desc),date,type:isIncome?'income':'expense',amount}}).filter(Boolean)}
 function parseDate(s){if(/^\d{4}-\d{2}-\d{2}$/.test(s))return s;const m=s.match(/^(\d{1,2})[./-](\d{1,2})[./-](\d{4})$/);if(m)return `${m[3]}-${m[2].padStart(2,'0')}-${m[1].padStart(2,'0')}`;const d=new Date(s);return isNaN(d)?null:d.toISOString().slice(0,10)}
 function guessCategory(s){const x=s.toLowerCase();if(/netflix|spotify|disney|apple|youtube|מנוי/.test(x))return'מנויים';if(/דלק|פז|סונול|yellow|רב קו/.test(x))return'תחבורה';if(/שופרסל|רמי לוי|ויקטורי|סופר|מכולת/.test(x))return'אוכל';if(/מסעד|קפה|wolt|תן ביס/.test(x))return'בילויים';return'אחר'}
 $('#downloadCsv').onclick=()=>{const rows=[['תיאור','קטגוריה','תאריך','סוג','סכום'],...transactions.map(t=>[t.description,t.category,t.date,t.type,t.amount])];const csv='\uFEFF'+rows.map(r=>r.map(v=>'"'+String(v).replace(/"/g,'""')+'"').join(',')).join('\n');const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv;charset=utf-8'}));a.download='moneytrace-transactions.csv';a.click();URL.revokeObjectURL(a.href)};
@@ -68,7 +69,7 @@ $('#backupInput').addEventListener('change',async e=>{
   const restored=data.transactions.map((t,i)=>{
    const amount=Number(t.amount);const date=String(t.date||'');
    if(!t.description||!Number.isFinite(amount)||amount<0||!/^\d{4}-\d{2}-\d{2}$/.test(date)||!['income','expense'].includes(t.type))throw new Error('קובץ הגיבוי מכיל תנועה לא תקינה');
-   return{id:t.id??(Date.now()+i),description:String(t.description),category:String(t.category||'אחר'),date,type:t.type,amount};
+   return{id:newTransactionId(),description:String(t.description),category:String(t.category||'אחר'),date,type:t.type,amount};
   });
   if(!confirm('השחזור יחליף את כל התנועות הקיימות במכשיר. להמשיך?'))return;
   transactions=restored;save();render();showToast('הגיבוי שוחזר בהצלחה');
@@ -77,43 +78,63 @@ $('#backupInput').addEventListener('change',async e=>{
 });
 
 
-// Supabase authentication and per-user cloud sync.
+// Supabase authentication and account-isolated cloud sync (v2).
 (function initCloud(){
  const status=$('#cloudStatus'),form=$('#authForm'),email=$('#authEmail'),password=$('#authPassword');
- if(!window.supabase||!window.MONEYTRACE_SUPABASE_URL||!window.MONEYTRACE_SUPABASE_PUBLISHABLE_KEY){status.textContent='שירות הענן לא נטען. בדוק חיבור לאינטרנט.';return}
+ const gate=$('#loginGate'),gateForm=$('#loginGateForm'),gateEmail=$('#gateEmail'),gatePassword=$('#gatePassword'),gateStatus=$('#gateStatus'),gateSignup=$('#gateSignup'),mainApp=$('#mainApp'),mobileNav=$('#mainMobileNav');
+ function showGate(message){gate.style.display='flex';mainApp.style.display='none';mobileNav.style.display='none';if(message)gateStatus.textContent=message}
+ function showApp(){gate.style.display='none';mainApp.style.display='';mobileNav.style.display=''}
+ showGate('בודק התחברות…');
+ if(!window.supabase||!window.MONEYTRACE_SUPABASE_URL||!window.MONEYTRACE_SUPABASE_PUBLISHABLE_KEY){status.textContent='שירות הענן לא נטען. בדוק חיבור לאינטרנט.';showGate('לא ניתן לטעון את שירות ההתחברות. בדוק אינטרנט ורענן את הדף.');return}
  const client=window.supabase.createClient(window.MONEYTRACE_SUPABASE_URL,window.MONEYTRACE_SUPABASE_PUBLISHABLE_KEY);
  window.mtSupabase=client;window.mtUser=null;window.mtCloudSyncEnabled=false;
  const logout=$('#authLogout'),submit=$('#authSubmit'),signup=$('#authSignup');
- function setSignedIn(user){window.mtUser=user;window.mtCloudSyncEnabled=false;const logged=!!user;status.textContent=logged?'מחובר לחשבון. בודק נתונים…':'עדיין לא מחובר לחשבון ענן.';email.disabled=logged;password.disabled=logged;submit.classList.toggle('hidden',logged);signup.classList.toggle('hidden',logged);logout.classList.toggle('hidden',!logged)}
- async function syncAll(){if(!window.mtUser||!window.mtCloudSyncEnabled)return;const rows=transactions.map(t=>({id:String(t.id),user_id:window.mtUser.id,description:String(t.description),category:String(t.category||'אחר'),date:t.date,type:t.type,amount:Number(t.amount)}));if(rows.length){const {error}=await client.from('transactions').upsert(rows,{onConflict:'id'});if(error)throw error}status.textContent='מחובר כ־'+window.mtUser.email+' · הסנכרון פעיל';}
+ let pollHandle=null, syncing=false, syncPending=false;
+ function setSignedIn(user){window.mtUser=user;window.mtCloudSyncEnabled=false;const logged=!!user;status.textContent=logged?'מחובר לחשבון. טוען נתונים…':'עדיין לא מחובר לחשבון ענן.';email.disabled=logged;password.disabled=logged;submit.classList.toggle('hidden',logged);signup.classList.toggle('hidden',logged);logout.classList.toggle('hidden',!logged);if(!logged)showGate('התחבר או צור חשבון כדי להיכנס ל־MONEYTRACE.');}
+ function cacheCurrent(){localStorage.setItem(KEY,JSON.stringify(transactions));isDemo=false;render()}
+ async function syncAll(){
+  if(!window.mtUser||!window.mtCloudSyncEnabled)return;
+  if(syncing){syncPending=true;return}
+  syncing=true;
+  try{
+   const rows=transactions.map(t=>({id:String(t.id),user_id:window.mtUser.id,description:String(t.description),category:String(t.category||'אחר'),date:t.date,type:t.type,amount:Number(t.amount)}));
+   if(rows.length){const {error}=await client.from('transactions').upsert(rows,{onConflict:'id'});if(error)throw error}
+   status.textContent='מחובר כ־'+window.mtUser.email+' · הסנכרון פעיל';
+  } finally {syncing=false;if(syncPending){syncPending=false;syncAll().catch(err=>{status.textContent='שגיאת סנכרון: '+err.message})}}
+ }
  window.syncAll=syncAll;
+ async function refreshFromCloud(){
+  if(!window.mtUser||!window.mtCloudSyncEnabled||syncing||document.hidden)return;
+  const {data,error}=await client.from('transactions').select('id,description,category,date,type,amount').eq('user_id',window.mtUser.id);
+  if(error){status.textContent='שגיאה ברענון מהענן: '+error.message;return}
+  const remote=(data||[]).map(r=>({id:r.id,description:r.description,category:r.category,date:r.date,type:r.type,amount:Number(r.amount)}));
+  const before=JSON.stringify(transactions.slice().sort((a,b)=>String(a.id).localeCompare(String(b.id))));
+  const after=JSON.stringify(remote.slice().sort((a,b)=>String(a.id).localeCompare(String(b.id))));
+  if(before!==after){transactions=remote;cacheCurrent();status.textContent='מחובר כ־'+window.mtUser.email+' · הנתונים עודכנו מהענן'}
+ }
  async function loadCloud(user){
   if(window.mtLoadingUser===user.id)return;
-  window.mtLoadingUser=user.id;
-  setSignedIn(user);status.textContent='מתחבר ובודק את נתוני הענן…';
+  window.mtLoadingUser=user.id;window.mtCloudSyncEnabled=false;setSignedIn(user);
+  // Every account has its own local cache. The cloud is authoritative; never upload
+  // the previous browser user's local rows into a newly selected account.
+  KEY='moneytrace_transactions_v1_user_'+user.id;
   try{
    const {data:remote,error}=await client.from('transactions').select('id,description,category,date,type,amount').eq('user_id',user.id);
    if(error)throw error;
-   const localRows=isDemo?[]:transactions.slice();
-   if(remote&&remote.length){
-    // Keep a local safety snapshot, but never merge another account's local data into this account.
-    if(localRows.length)localStorage.setItem('moneytrace_precloud_backup_v1',JSON.stringify(localRows));
-    transactions=remote.map(r=>({id:r.id,description:r.description,category:r.category,date:r.date,type:r.type,amount:Number(r.amount)}));
-    localStorage.setItem(KEY,JSON.stringify(transactions));isDemo=false;window.mtCloudSyncEnabled=true;render();
-    status.textContent='מחובר כ־'+user.email+' · הנתונים נטענו מהענן';
-   }else if(localRows.length){
-    const shouldUpload=confirm('בחשבון הענן הזה עדיין אין תנועות. נמצאו '+localRows.length+' תנועות מקומיות במכשיר. להעביר אותן לחשבון הענן הזה?');
-    if(shouldUpload){window.mtCloudSyncEnabled=true;await syncAll();status.textContent='מחובר כ־'+user.email+' · התנועות המקומיות הועלו לענן';}
-    else{window.mtCloudSyncEnabled=false;status.textContent='מחובר כ־'+user.email+' · התנועות נשארו במכשיר ולא סונכרנו. כדי למנוע ערבוב נתונים, הסנכרון מושהה.';}
-   }else{
-    transactions=[];localStorage.setItem(KEY,JSON.stringify(transactions));isDemo=false;window.mtCloudSyncEnabled=true;render();status.textContent='מחובר כ־'+user.email+' · אפשר להתחיל להוסיף תנועות';
-   }
-  }catch(e){window.mtCloudSyncEnabled=false;status.textContent='התחברת, אך טעינת הענן נכשלה: '+e.message;}
+   transactions=(remote||[]).map(r=>({id:r.id,description:r.description,category:r.category,date:r.date,type:r.type,amount:Number(r.amount)}));
+   cacheCurrent();window.mtCloudSyncEnabled=true;
+   status.textContent='מחובר כ־'+user.email+' · '+transactions.length+' תנועות נטענו מהענן';
+   gateStatus.textContent='';showApp();
+   if(pollHandle)clearInterval(pollHandle);
+   pollHandle=setInterval(()=>refreshFromCloud().catch(err=>{status.textContent='שגיאת סנכרון: '+err.message}),15000);
+  }catch(e){window.mtCloudSyncEnabled=false;status.textContent='התחברת, אך טעינת הענן נכשלה: '+e.message;showGate('ההתחברות הצליחה, אך טעינת הנתונים נכשלה: '+e.message);}
   finally{window.mtLoadingUser=null;}
  }
+ gateForm.addEventListener('submit',async e=>{e.preventDefault();const btn=$('#gateLogin');btn.disabled=true;gateStatus.textContent='מתחבר…';try{const {data,error}=await client.auth.signInWithPassword({email:gateEmail.value.trim(),password:gatePassword.value});if(error)throw error;if(data.user)await loadCloud(data.user)}catch(err){gateStatus.textContent='שגיאת התחברות: '+err.message}finally{btn.disabled=false}});
+ gateSignup.addEventListener('click',async()=>{if(!gateEmail.value.trim()||gatePassword.value.length<8){gateStatus.textContent='הזן אימייל וסיסמה של לפחות 8 תווים.';return}const btn=$('#gateSignup');btn.disabled=true;gateStatus.textContent='יוצר חשבון…';try{const {data,error}=await client.auth.signUp({email:gateEmail.value.trim(),password:gatePassword.value,options:{emailRedirectTo:'https://solotzvi-commits.github.io/Moneytrace-/'}});if(error)throw error;if(data.session&&data.user)await loadCloud(data.user);else gateStatus.textContent='נשלח אליך אימייל לאימות. אשר אותו ואז חזור לכאן והתחבר.'}catch(err){gateStatus.textContent='שגיאת הרשמה: '+err.message}finally{btn.disabled=false}});
  form.addEventListener('submit',async e=>{e.preventDefault();submit.disabled=true;try{const {data,error}=await client.auth.signInWithPassword({email:email.value.trim(),password:password.value});if(error)throw error;if(data.user)await loadCloud(data.user)}catch(err){status.textContent='שגיאת התחברות: '+err.message}finally{submit.disabled=false}});
  signup.addEventListener('click',async()=>{if(!email.value.trim()||password.value.length<8){status.textContent='הזן אימייל וסיסמה של לפחות 8 תווים.';return}signup.disabled=true;try{const {data,error}=await client.auth.signUp({email:email.value.trim(),password:password.value,options:{emailRedirectTo:'https://solotzvi-commits.github.io/Moneytrace-/'}});if(error)throw error;if(data.session&&data.user)await loadCloud(data.user);else status.textContent='נשלח אליך אימייל לאימות. פתח אותו ואז חזור לאתר והתחבר.'}catch(err){status.textContent='שגיאת הרשמה: '+err.message}finally{signup.disabled=false}});
- logout.addEventListener('click',async()=>{window.mtCloudSyncEnabled=false;const {error}=await client.auth.signOut();if(error){status.textContent='שגיאה בהתנתקות: '+error.message;return}setSignedIn(null);showToast('התנתקת מהחשבון')});
- client.auth.onAuthStateChange((event,session)=>{if(event==='SIGNED_IN'&&session?.user&&window.mtUser?.id!==session.user.id)loadCloud(session.user);if(event==='SIGNED_OUT'){window.mtCloudSyncEnabled=false;setSignedIn(null)}});
+ logout.addEventListener('click',async()=>{window.mtCloudSyncEnabled=false;if(pollHandle)clearInterval(pollHandle);const {error}=await client.auth.signOut();if(error){status.textContent='שגיאה בהתנתקות: '+error.message;return}setSignedIn(null);showToast('התנתקת מהחשבון')});
+ client.auth.onAuthStateChange((event,session)=>{if(event==='SIGNED_IN'&&session?.user&&window.mtUser?.id!==session.user.id)loadCloud(session.user);if(event==='SIGNED_OUT'){window.mtCloudSyncEnabled=false;if(pollHandle)clearInterval(pollHandle);setSignedIn(null)}});
  client.auth.getSession().then(({data,error})=>{if(error){status.textContent='לא ניתן לבדוק התחברות: '+error.message;return}if(data.session?.user)loadCloud(data.session.user);else setSignedIn(null)});
 })();
