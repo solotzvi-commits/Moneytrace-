@@ -119,3 +119,110 @@ renderBudgets();renderGoals();
   const init=()=>{processWeek();renderPanel();renderPool();};
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',init);else init();
 })();
+/* MONEYTRACE AI ASSISTANT — private, on-device financial insights MVP.
+   This first version answers from the user's recorded transactions locally.
+   It does not call an external AI model or transmit chat messages. */
+(() => {
+  const $ = s => document.querySelector(s);
+  const cash = n => '₪' + Number(n || 0).toLocaleString('he-IL', {maximumFractionDigits: 0});
+  const read = (key, fallback) => { try { return JSON.parse(localStorage.getItem(key)) ?? fallback; } catch { return fallback; } };
+  const today = new Date();
+  const monthKey = today.toISOString().slice(0, 7);
+  const allTransactions = () => Array.isArray(transactions) ? transactions.filter(t => t && Number.isFinite(Number(t.amount)) && t.date) : [];
+  const expenses = (items, monthOnly=false) => items.filter(t => t.type !== 'income' && (!monthOnly || String(t.date).slice(0,7) === monthKey));
+  const incomes = (items, monthOnly=false) => items.filter(t => t.type === 'income' && (!monthOnly || String(t.date).slice(0,7) === monthKey));
+  const sum = items => items.reduce((n,t) => n + Number(t.amount || 0), 0);
+  const safe = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  const currentMonthLabel = today.toLocaleDateString('he-IL',{month:'long',year:'numeric'});
+  let history = [];
+
+  const styles = document.createElement('style');
+  styles.textContent = `
+    .ai-shell{display:grid;grid-template-columns:minmax(0,1fr);gap:14px;max-width:920px}
+    .ai-hero{background:linear-gradient(135deg,#173a38,#142235 65%,#17233a);border:1px solid #31564e;border-radius:18px;padding:18px;display:flex;gap:14px;align-items:center}
+    .ai-mark{width:48px;height:48px;flex:0 0 48px;border-radius:15px;background:#55d6a5;color:#08251c;display:grid;place-items:center;font-size:24px;font-weight:900}
+    .ai-hero h2{margin:0 0 5px;font-size:19px}.ai-hero p{margin:0;color:#b8c8d4;font-size:12px;line-height:1.55}
+    .ai-chat{background:#111a2a;border:1px solid #293951;border-radius:18px;overflow:hidden}
+    .ai-messages{min-height:250px;max-height:52vh;overflow:auto;padding:15px;display:flex;flex-direction:column;gap:12px}
+    .ai-msg{max-width:88%;padding:12px 14px;border-radius:15px;font-size:13px;line-height:1.65;white-space:pre-wrap;overflow-wrap:anywhere}
+    .ai-msg.bot{align-self:flex-start;background:#1a2a3d;border:1px solid #2b4058;color:#edf4fb;border-top-right-radius:5px}
+    .ai-msg.user{align-self:flex-end;background:#174b40;color:#eafff6;border-top-left-radius:5px}
+    .ai-msg small{display:block;color:#9eb0c3;font-size:10px;margin-top:7px}
+    .ai-prompts{display:flex;gap:8px;flex-wrap:wrap;padding:0 15px 14px}
+    .ai-prompt{border:1px solid #38516c;background:#142235;color:#cbd8e8;border-radius:999px;padding:8px 11px;font:inherit;font-size:11px;cursor:pointer}
+    .ai-compose{display:flex;gap:9px;padding:13px;border-top:1px solid #293951}
+    .ai-compose input{flex:1;min-width:0;background:#0b1321;color:#fff;border:1px solid #35465f;border-radius:12px;padding:12px;font:inherit;font-size:13px}
+    .ai-compose button{border:0;background:#55d6a5;color:#09271e;border-radius:12px;padding:0 18px;font:inherit;font-weight:800;cursor:pointer}
+    .ai-note{font-size:11px;color:#8e9bb1;line-height:1.6;margin:0}
+    @media(max-width:600px){.ai-messages{max-height:48vh}.ai-msg{max-width:94%}.ai-hero{align-items:flex-start}}
+  `;
+  document.head.appendChild(styles);
+
+  const mainNav = document.querySelector('.sidebar nav');
+  if (mainNav && !document.querySelector('[data-view="assistant"]')) {
+    const b = document.createElement('button'); b.className='nav-item'; b.dataset.view='assistant'; b.innerHTML='<span>✧</span> עוזר AI'; mainNav.appendChild(b);
+  }
+  const mobileNav = document.querySelector('.mobile-nav');
+  if (mobileNav && !document.querySelector('.mobile-nav [data-view="assistant"]')) {
+    const b=document.createElement('button'); b.dataset.view='assistant'; b.innerHTML='✧<small>AI</small>'; mobileNav.appendChild(b);
+  }
+  if (!$('#view-assistant')) {
+    const section=document.createElement('section'); section.id='view-assistant'; section.className='view';
+    section.innerHTML=`
+      <div class="section-intro"><div><h2>העוזר הפיננסי שלך</h2><p>שאל שאלות על ההוצאות, ההכנסות והחיסכון שלך.</p></div><span class="soft-badge">בטא</span></div>
+      <div class="ai-shell">
+        <div class="ai-hero"><div class="ai-mark">✧</div><div><h2>היי! אני העוזר של MONEYTRACE</h2><p>אני יכול לנתח את התנועות שנרשמו באפליקציה, לעזור להבין לאן הכסף הולך ולהציע צעדים לחיסכון.</p></div></div>
+        <div class="ai-chat"><div class="ai-messages" id="aiMessages" aria-live="polite"></div>
+          <div class="ai-prompts"><button class="ai-prompt" data-prompt="כמה הוצאתי החודש?">כמה הוצאתי החודש?</button><button class="ai-prompt" data-prompt="באיזו קטגוריה הוצאתי הכי הרבה?">איפה הוצאתי הכי הרבה?</button><button class="ai-prompt" data-prompt="תן לי 3 רעיונות לחיסכון">תן לי רעיונות לחיסכון</button><button class="ai-prompt" data-prompt="איך מצב התקציב שלי?">איך מצב התקציב שלי?</button></div>
+          <form class="ai-compose" id="aiForm"><input id="aiInput" autocomplete="off" maxlength="300" placeholder="שאל אותי משהו על הכסף שלך…" aria-label="שאלה לעוזר הפיננסי"><button type="submit">שליחה</button></form>
+        </div>
+        <p class="ai-note">פרטיות: בגרסת הבטא הזו הניתוח מתבצע במכשיר על בסיס התנועות שהזנת או ייבאת. השיחה אינה נשלחת לשירות חיצוני. זהו כלי עזר ולא ייעוץ פיננסי מקצועי; הנתונים אינם בהכרח כוללים את כל הפעילות שלך.</p>
+      </div>`;
+    document.querySelector('.main')?.appendChild(section);
+  }
+
+  function goAssistant(){
+    document.querySelectorAll('.view').forEach(v=>v.classList.toggle('active',v.id==='view-assistant'));
+    document.querySelectorAll('[data-view]').forEach(b=>b.classList.toggle('active',b.dataset.view==='assistant'));
+    if ($('#pageTitle')) $('#pageTitle').textContent='עוזר AI פיננסי';
+    if (!history.length) addMessage('bot',`אני כאן כדי לעזור לך להבין את הכסף שלך. הנתונים הזמינים כרגע הם התנועות שנרשמו באפליקציה עבור ${currentMonthLabel}. במה נתחיל?`);
+  }
+  function addMessage(role,text){
+    const box=$('#aiMessages'); if(!box)return;
+    const el=document.createElement('div');el.className='ai-msg '+role;el.textContent=text;box.appendChild(el);box.scrollTop=box.scrollHeight;
+  }
+  function answer(question){
+    const q=question.toLowerCase(), items=allTransactions(), ex=expenses(items,true), inc=incomes(items,true), totalEx=sum(ex), totalIn=sum(inc), balance=totalIn-totalEx;
+    if(!items.length)return 'עדיין אין לי תנועות לנתח. הוסף הוצאה או ייבא קובץ CSV, ואז אוכל לעזור לך להבין את התמונה הפיננסית.';
+    if(/כמה.*(הוצא|הוצאות)|הוצאות.*(חודש|עכשיו)/.test(q))return `בחודש ${currentMonthLabel} נרשמו הוצאות בסך ${cash(totalEx)} מתוך ${ex.length} תנועות. ${totalIn?`נרשמו גם הכנסות בסך ${cash(totalIn)}, כך שהיתרה המחושבת היא ${cash(balance)}.`:'עדיין לא נרשמו הכנסות החודש.'}`;
+    if(/הכנס|משכורת|כמה.*הרווח/.test(q))return `בחודש ${currentMonthLabel} נרשמו הכנסות בסך ${cash(totalIn)}. ההוצאות שנרשמו הן ${cash(totalEx)} והיתרה המחושבת היא ${cash(balance)}.`;
+    if(/יתרה|מצב.*כספי|מצב.*חשבון/.test(q))return `לפי התנועות שנרשמו החודש: הכנסות ${cash(totalIn)}, הוצאות ${cash(totalEx)}, והפרש ${cash(balance)}. זו אינה יתרת הבנק בפועל.`;
+    const byCategory={};ex.forEach(t=>{const c=t.category||'אחר';byCategory[c]=(byCategory[c]||0)+Number(t.amount)});
+    const sorted=Object.entries(byCategory).sort((a,b)=>b[1]-a[1]);
+    if(/קטגור|איפה.*(הוצא|בזבז)|הכי הרבה/.test(q))return sorted.length?`הקטגוריה שבה הוצאת הכי הרבה החודש היא ${sorted[0][0]}: ${cash(sorted[0][1])}.\n${sorted.slice(1,4).map((x,i)=>`${i+2}. ${x[0]} — ${cash(x[1])}`).join('\n')}`:'אין עדיין הוצאות החודש.';
+    if(/מנוי|חיוב חוזר|נטפליקס|spotify/.test(q)){
+      const groups={};items.filter(t=>t.type!=='income').forEach(t=>{const k=String(t.description||'').trim();(groups[k]??=[]).push(t)});
+      const recurring=Object.entries(groups).filter(([,a])=>a.length>=2).map(([name,a])=>({name,avg:sum(a)/a.length,count:a.length})).sort((a,b)=>b.avg-a.avg).slice(0,5);
+      return recurring.length?'אלה בתי העסק עם יותר מחיוב אחד בהיסטוריה שלך (לא בהכרח מנוי):\n'+recurring.map(x=>`• ${x.name}: ממוצע ${cash(x.avg)} (${x.count} חיובים)`).join('\n'):'לא זיהיתי מספיק חיובים חוזרים. כדאי לייבא היסטוריה של כמה חודשים.';
+    }
+    if(/תקציב|חריג|מסגרת/.test(q)){
+      const budgets=read('moneytrace_budgets_v1',{}), limits=budgets[monthKey]||{};
+      const rows=Object.entries(limits).map(([cat,limit])=>({cat,limit:Number(limit),spent:byCategory[cat]||0}));
+      if(!rows.length)return 'עדיין לא הגדרת תקציבים לחודש הזה. אפשר להיכנס למסך ״תקציב״ ולהגדיר מסגרת לכל קטגוריה.';
+      return rows.map(x=>`${x.cat}: ${cash(x.spent)} מתוך ${cash(x.limit)} (${x.limit?Math.round(x.spent/x.limit*100):0}%)${x.spent>x.limit?' — חריגה!':x.spent>=x.limit*.8?' — מתקרב לתקרה':''}`).join('\n');
+    }
+    if(/יעד|חיסכון|לחסוך|לחסוך/.test(q)){
+      const goals=read('moneytrace_goals_v1',[]), tips=sorted.slice(0,3).map(([c,v])=>`• ${c}: בדוק אם אפשר להפחית 10% — כ־${cash(v*.1)} בחודש לפי הנתונים הנוכחיים`).join('\n');
+      const goalText=goals.length?'\nיעדי החיסכון שלך:\n'+goals.map(g=>`• ${g.name}: נחסכו ${cash(g.saved)} מתוך ${cash(g.target)}`).join('\n'):'';
+      return `כמה רעיונות ראשוניים לחיסכון:\n${tips||'צריך עוד תנועות כדי לזהות קטגוריות מרכזיות.'}${goalText}\nאלה הצעות בלבד, לא חיסכון שכבר הושג.`;
+    }
+    if(/שלום|היי|הי|מה נשמע/.test(q))return 'היי! אפשר לשאול אותי כמה הוצאת, איפה ההוצאות הגדולות, איך התקציב מתקדם או איך אפשר לחסוך.';
+    return `אני עדיין לומד לענות על שאלות מורכבות. כרגע אוכל לעזור עם:\n• סיכום הכנסות והוצאות החודש\n• הקטגוריות שבהן הוצאת הכי הרבה\n• בדיקת תקציבים ויעדי חיסכון\n• איתור חיובים שחוזרים יותר מפעם אחת\n\nנסה לשאול: ״באיזו קטגוריה הוצאתי הכי הרבה?״`;
+  }
+  function submitQuestion(value){const q=String(value||'').trim();if(!q)return;addMessage('user',q);const reply=answer(q);history.push({q,reply});addMessage('bot',reply);const input=$('#aiInput');if(input)input.value='';}
+  document.addEventListener('click',e=>{
+    const nav=e.target.closest('[data-view="assistant"]');if(nav){e.preventDefault();goAssistant();return;}
+    const prompt=e.target.closest('[data-prompt]');if(prompt)submitQuestion(prompt.dataset.prompt);
+  });
+  $('#aiForm')?.addEventListener('submit',e=>{e.preventDefault();submitQuestion($('#aiInput')?.value);});
+})();
