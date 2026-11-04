@@ -226,3 +226,49 @@ renderBudgets();renderGoals();
   });
   $('#aiForm')?.addEventListener('submit',e=>{e.preventDefault();submitQuestion($('#aiInput')?.value);});
 })();
+
+
+/* MONEYTRACE: safe bulk deletion of all transactions. */
+(() => {
+  const toolbar = document.querySelector('#view-transactions .section-intro .toolbar');
+  if (!toolbar || document.getElementById('deleteAllTransactions')) return;
+  const button = document.createElement('button');
+  button.type = 'button';
+  button.id = 'deleteAllTransactions';
+  button.className = 'secondary';
+  button.textContent = '🗑 מחיקת כל התנועות';
+  button.style.cssText = 'border-color:#8c454b;color:#ff9da5';
+  toolbar.appendChild(button);
+
+  button.addEventListener('click', async () => {
+    const count = transactions.length;
+    if (!count) { showToast('אין תנועות למחיקה'); return; }
+    const confirmation = prompt(
+      `הפעולה תמחק לצמיתות את כל ${count} התנועות שלך` +
+      (window.mtUser && window.mtCloudSyncEnabled ? ' מהמכשיר ומהענן.' : ' מהמכשיר בלבד.') +
+      '\n\nכדי לאשר, כתוב/כתבי: מחיקה'
+    );
+    if (confirmation !== 'מחיקה') return;
+
+    button.disabled = true;
+    button.textContent = 'מוחק…';
+    try {
+      if (window.mtUser && window.mtCloudSyncEnabled) {
+        const { error } = await window.mtSupabase
+          .from('transactions')
+          .delete()
+          .eq('user_id', window.mtUser.id);
+        if (error) throw error;
+      }
+      transactions = [];
+      save();
+      render();
+      showToast('כל התנועות נמחקו בהצלחה');
+    } catch (error) {
+      showToast('המחיקה נכשלה: ' + (error?.message || 'שגיאה לא ידועה'));
+    } finally {
+      button.disabled = false;
+      button.textContent = '🗑 מחיקת כל התנועות';
+    }
+  });
+})();
