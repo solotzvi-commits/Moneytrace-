@@ -33,6 +33,7 @@
       <button class="nav-item" data-view="subscriptions"><span>⟳</span> מנויים ותשלומים</button>
       <button class="nav-item" data-view="insights"><span>✧</span> תובנות וחיסכון</button>
       <button class="nav-item" data-view="connect"><span>⌁</span> חיבור חשבון</button>
+      <button class="nav-item" data-view="business"><span>▣</span> ניהול העסק</button>
     </nav>
     <div class="sidebar-bottom"><div class="secure"><span class="secure-icon">✓</span><div><b>הפרטיות שלך חשובה</b><small>הנתונים נשמרים במכשיר שלך</small></div></div><small class="version">גרסת בטא · 0.3</small></div>
   </aside>
@@ -85,6 +86,9 @@
         <div class="insight-box"><b>🤖 AI Coach — חיבור למודל AI</b><p id="mtAiStatus">הניתוחים המקומיים זמינים. כדי להפעיל תשובות GPT אמיתיות יש לפרוס את פונקציית Supabase ולהגדיר OPENAI_API_KEY בצד השרת.</p><div style="display:flex;gap:8px;margin-top:10px"><input id="mtAiQuestion" placeholder="שאל שאלה על ההתנהלות הפיננסית שלך" style="flex:1;min-width:0"><button class="secondary" id="mtAiAsk">שאל את המאמן</button></div><p id="mtAiAnswer" aria-live="polite"></p></div>
       </article>
     </section>
+    <section id="view-business" class="view">
+      <div id="businessRoot"></div>
+    </section>
     <section id="view-connect" class="view">
       <div class="section-intro"><div><h2>חיבור חשבון בנק</h2><p>ייבוא מאובטח של תנועות כדי לקבל תמונה פיננסית מלאה.</p></div><span class="soft-badge">בפיתוח</span></div>
       <article class="panel connect-hero"><div class="connect-icon">⌁</div><div><h3>חיבור בנק אמיתי — השלב הבא</h3><p>כדי להתחבר לבנקים בישראל נדרש לעבוד עם ספק שירות מידע פיננסי בעל רישיון מתאים, לקבל הסכמה מפורשת מהמשתמש ולהשתמש בתהליך ההזדהות המאובטח של הבנק.</p><p>לא נבקש ממך סיסמה או קוד חד־פעמי, ולא נבצע פעולות בחשבון.</p></div></article>
@@ -102,7 +106,7 @@
     </section>
   </main>
 </div>
-<nav class="mobile-nav" id="mainMobileNav" style="display:none"><button class="active" data-view="overview">◫<small>סקירה</small></button><button data-view="transactions">↕<small>תנועות</small></button><button data-view="subscriptions">⟳<small>מנויים</small></button><button data-view="insights">✧<small>תובנות</small></button><button data-view="connect">⌁<small>בנק</small></button></nav>
+<nav class="mobile-nav" id="mainMobileNav" style="display:none"><button class="active" data-view="overview">◫<small>סקירה</small></button><button data-view="transactions">↕<small>תנועות</small></button><button data-view="subscriptions">⟳<small>מנויים</small></button><button data-view="insights">✧<small>תובנות</small></button><button data-view="connect">⌁<small>בנק</small></button><button data-view="business">▣<small>עסק</small></button></nav>
 <div class="modal-backdrop hidden" id="modal"><div class="modal"><button class="modal-close" id="closeModal">×</button><h3>הוספת תנועה</h3><form id="transactionForm"><label>תיאור<input name="description" required placeholder="למשל: קניות בסופר"></label><div class="form-row"><label>סכום בש״ח<input name="amount" type="number" min="0.01" step="0.01" required></label><label>סוג<select name="type"><option value="expense">הוצאה</option><option value="income">הכנסה</option></select></label></div><div class="form-row"><label>קטגוריה<select name="category"><option>אוכל</option><option>תחבורה</option><option>בילויים</option><option>מנויים</option><option>קניות</option><option>חשבונות</option><option>בריאות</option><option>דיור</option><option>משכורת</option><option>אחר</option></select></label><label>תאריך<input name="date" type="date" required></label></div><button class="primary full" type="submit">שמירת תנועה</button></form></div></div>
 <div class="toast" id="toast" role="status"></div>
 <script src="https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/build/pdf.min.js"></script>
@@ -113,4 +117,5 @@
 <script src="features.js"></script>
 <script src="moneytrace-six-features.js"></script>
 <script src="coach-2.2.js"></script>
+<script src="business-mode.js"></script>
 </body></html>

@@ -1,8 +1,8 @@
 {
   "name": "moneytrace-app",
-  "version": "0.4.0",
+  "version": "0.5.0",
   "private": true,
-  "description": "MONEYTRACE personal finance tracker",
+  "description": "MONEYTRACE personal and small-business finance manager",
   "scripts": {
     "sync": "npx cap sync",
     "android": "npx cap open android",
