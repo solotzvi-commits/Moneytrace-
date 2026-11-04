@@ -47,6 +47,41 @@ $('#csvInput').addEventListener('change',async e=>{const file=e.target.files[0];
 function parseCSV(text){const lines=text.replace(/^\uFEFF/,'').split(/\r?\n/).filter(x=>x.trim());if(lines.length<2)throw Error('הקובץ ריק או חסרות בו שורות');const delim=(lines[0].match(/;/g)||[]).length>(lines[0].match(/,/g)||[]).length?';':',';const parseLine=line=>{const out=[];let cur='',q=false;for(let i=0;i<line.length;i++){const c=line[i];if(c==='"'&&line[i+1]==='"'&&q){cur+='"';i++}else if(c==='"')q=!q;else if(c===delim&&!q){out.push(cur.trim());cur=''}else cur+=c}out.push(cur.trim());return out};const heads=parseLine(lines[0]).map(x=>x.toLowerCase());const find=names=>heads.findIndex(h=>names.some(n=>h.includes(n)));const iDesc=find(['תיאור','שם בית עסק','בית עסק','description','merchant','details','name']);const iDate=find(['תאריך','date','תאריך עסקה']);const iAmount=find(['סכום','amount','חיוב','זכות']);const iType=find(['סוג','type','debit/credit']);const iCat=find(['קטגוריה','category']);if(iDesc<0||iDate<0||iAmount<0)throw Error('נדרשות עמודות תיאור, תאריך וסכום (אפשר גם באנגלית)');return lines.slice(1).map((line,i)=>{const c=parseLine(line);let raw=(c[iAmount]||'').replace(/[₪,\s]/g,'');let amount=Number(raw);if(!Number.isFinite(amount)||!c[iDesc]||!c[iDate])return null;const date=parseDate(c[iDate]);if(!date)return null;let type=(c[iType]||'').toLowerCase();const isIncome=/הכנסה|זכות|credit|income/.test(type)||amount<0;amount=Math.abs(amount);const desc=c[iDesc];return{id:newTransactionId(),description:desc,category:iCat>=0&&c[iCat]?c[iCat]:guessCategory(desc),date,type:isIncome?'income':'expense',amount}}).filter(Boolean)}
 function parseDate(s){if(/^\d{4}-\d{2}-\d{2}$/.test(s))return s;const m=s.match(/^(\d{1,2})[./-](\d{1,2})[./-](\d{4})$/);if(m)return `${m[3]}-${m[2].padStart(2,'0')}-${m[1].padStart(2,'0')}`;const d=new Date(s);return isNaN(d)?null:d.toISOString().slice(0,10)}
 function guessCategory(s){const x=s.toLowerCase();if(/netflix|spotify|disney|apple|youtube|מנוי/.test(x))return'מנויים';if(/דלק|פז|סונול|yellow|רב קו/.test(x))return'תחבורה';if(/שופרסל|רמי לוי|ויקטורי|סופר|מכולת/.test(x))return'אוכל';if(/מסעד|קפה|wolt|תן ביס/.test(x))return'בילויים';return'אחר'}
+
+/* PDF statement import: text is extracted locally in the browser, not uploaded. */
+$('#pdfInput')?.addEventListener('change',async e=>{
+ const file=e.target.files[0];if(!file)return;
+ try{
+  if(!window.pdfjsLib)throw new Error('רכיב קריאת PDF לא נטען. רענן את האפליקציה ונסה שוב.');
+  const pdf=await pdfjsLib.getDocument({data:new Uint8Array(await file.arrayBuffer())}).promise;let lines=[];
+  for(let p=1;p<=pdf.numPages;p++){
+   const page=await pdf.getPage(p),content=await page.getTextContent();
+   const items=content.items.filter(x=>x.str&&x.str.trim()).map(x=>({s:x.str.trim(),y:Math.round(x.transform[5])}));
+   const groups=new Map();items.forEach(x=>{const k=x.y;if(!groups.has(k))groups.set(k,[]);groups.get(k).push(x.s)});
+   [...groups.entries()].sort((a,b)=>b[0]-a[0]).forEach(([,parts])=>lines.push(parts.join(' ')));
+  }
+  const parsed=parseBankPdfLines(lines);
+  if(!parsed.length)throw new Error('לא זוהו תנועות בקובץ. ייתכן שזה PDF סרוק או פורמט שונה. אפשר לנסות CSV.');
+  const preview=parsed.slice(0,5).map(t=>t.date+' · '+t.description+' · '+money(t.amount)).join('\n');
+  if(!confirm('זוהו '+parsed.length+' תנועות. דוגמאות:\n'+preview+'\n\nלייבא את התנועות?'))return;
+  transactions.push(...parsed);save();render();showToast('יובאו '+parsed.length+' תנועות מה-PDF');
+ }catch(err){showToast(err.message||'לא ניתן לקרוא את קובץ ה-PDF')}finally{e.target.value=''}
+});
+function parseBankPdfLines(lines){
+ const out=[],seen=new Set();
+ for(const line of lines){
+  const dm=line.match(/(?:^|\s)(\d{1,2})[./-](\d{1,2})[./-](\d{2,4})(?:\s|$)/);if(!dm)continue;
+  let [,d,m,y]=dm;if(y.length===2)y='20'+y;const date=parseDate(d+'/'+m+'/'+y);if(!date)continue;
+  const tail=line.replace(dm[0],' ').trim(),amounts=[...tail.matchAll(/-?\d{1,3}(?:,\d{3})*(?:\.\d{2})/g)];if(!amounts.length)continue;
+  const last=amounts[amounts.length-1],amount=Math.abs(Number(last[0].replace(/,/g,'')));if(!Number.isFinite(amount)||amount<=0)continue;
+  const description=tail.replace(last[0],' ').replace(/\s+/g,' ').trim();if(description.length<2)continue;
+  const key=date+'|'+description+'|'+amount;if(seen.has(key))continue;seen.add(key);
+  const isIncome=/זיכוי|הפקדה|משכורת|העברה נכנסת/i.test(description);
+  out.push({id:newTransactionId(),description:description.slice(0,100),category:guessCategory(description),date,type:isIncome?'income':'expense',amount});
+ }
+ return out;
+}
+
 $('#downloadCsv').onclick=()=>{const rows=[['תיאור','קטגוריה','תאריך','סוג','סכום'],...transactions.map(t=>[t.description,t.category,t.date,t.type,t.amount])];const csv='\uFEFF'+rows.map(r=>r.map(v=>'"'+String(v).replace(/"/g,'""')+'"').join(',')).join('\n');const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv;charset=utf-8'}));a.download='moneytrace-transactions.csv';a.click();URL.revokeObjectURL(a.href)};
 $('#providerInfo').onclick=()=>showToast('שלב הבא: בדיקת ספק Open Banking מורשה והסכם אינטגרציה');
 $('#todayLabel').textContent=new Intl.DateTimeFormat('he-IL',{weekday:'long',day:'numeric',month:'long'}).format(new Date());
