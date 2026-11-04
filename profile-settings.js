@@ -1,0 +1,18 @@
+/* MONEYTRACE profile menu, workspace selection and display preferences. */
+(()=>{'use strict';
+const $=s=>document.querySelector(s), key=()=>`moneytrace_workspace_v1_${window.mtUser?.id||'local'}`, prefKey=()=>`moneytrace_preferences_v1_${window.mtUser?.id||'local'}`;
+let mode='both';
+function read(){try{mode=localStorage.getItem(key())||''}catch{mode=''}if(!['personal','business','both'].includes(mode))mode='';applyMode();}
+function applyMode(){const businessOnly=mode==='business',personalOnly=mode==='personal';document.querySelectorAll('[data-view="business"]').forEach(x=>x.classList.toggle('hidden',personalOnly));document.querySelectorAll('[data-view]:not([data-view="business"])').forEach(x=>x.classList.toggle('hidden',businessOnly));const chooser=$('#workspaceChooser');if(chooser)chooser.classList.toggle('hidden',!window.mtUser||!!mode);const email=$('#profileEmail');if(email)email.textContent=window.mtUser?.email||'החשבון שלי';if(window.mtUser&&mode==='business'){const active=document.querySelector('.view.active');if(!active||active.id!=='view-business'){document.querySelector('[data-view="business"]')?.click()}}else if(window.mtUser&&mode==='personal'&&$('#view-business')?.classList.contains('active')){document.querySelector('[data-view="overview"]')?.click()}}
+function setMode(next){if(!['personal','business','both'].includes(next))return;mode=next;try{localStorage.setItem(key(),mode)}catch{}$('#workspaceChooser')?.classList.add('hidden');$('#profileMenu')?.classList.add('hidden');applyMode();}
+function loadPrefs(){let p={theme:'dark',currency:'ILS',font:'normal'};try{p={...p,...JSON.parse(localStorage.getItem(prefKey())||'{}')}}catch{};document.body.classList.toggle('mt-light',p.theme==='light');document.body.classList.toggle('mt-large',p.font==='large');if($('#settingTheme'))$('#settingTheme').value=p.theme;if($('#settingCurrency'))$('#settingCurrency').value=p.currency;if($('#settingFont'))$('#settingFont').value=p.font;}
+$('#profileButton')?.addEventListener('click',()=>{const m=$('#profileMenu');m.classList.toggle('hidden');$('#profileButton').setAttribute('aria-expanded',String(!m.classList.contains('hidden')))});
+document.addEventListener('click',e=>{const a=e.target.closest('[data-profile-action]');if(a){const action=a.dataset.profileAction;if(['personal','business','both'].includes(action))setMode(action);if(action==='settings'){$('#profileMenu').classList.add('hidden');loadPrefs();$('#settingsOverlay').classList.remove('hidden')}if(action==='logout'){$('#profileMenu').classList.add('hidden');$('#authLogout')?.click()}return}const w=e.target.closest('[data-workspace]');if(w){setMode(w.dataset.workspace);return}if(!e.target.closest('#profileMenu')&&!e.target.closest('#profileButton'))$('#profileMenu')?.classList.add('hidden')});
+$('#settingsClose')?.addEventListener('click',()=>$('#settingsOverlay').classList.add('hidden'));
+$('#settingsSave')?.addEventListener('click',()=>{const p={theme:$('#settingTheme').value,currency:$('#settingCurrency').value,font:$('#settingFont').value};try{localStorage.setItem(prefKey(),JSON.stringify(p))}catch{}loadPrefs();$('#settingsOverlay').classList.add('hidden');window.showToast?.('ההגדרות נשמרו')});
+$('#settingsExport')?.addEventListener('click',()=>{$('#settingsOverlay').classList.add('hidden');$('#downloadCsv')?.click()});
+window.addEventListener('mt:user-ready',()=>{read();loadPrefs()});
+// app.js sets mtUser before dispatch; also support normal initial startup.
+const watch=()=>{if(window.mtUser){read();loadPrefs()}};document.addEventListener('DOMContentLoaded',watch);setTimeout(watch,0);
+window.MoneytraceProfile={setMode,getMode:()=>mode};
+})();

@@ -126,7 +126,7 @@ $('#backupInput').addEventListener('change',async e=>{
  window.mtSupabase=client;window.mtUser=null;window.mtCloudSyncEnabled=false;
  const logout=$('#authLogout'),submit=$('#authSubmit'),signup=$('#authSignup');
  let pollHandle=null, syncing=false, syncPending=false;
- function setSignedIn(user){window.mtUser=user;window.mtCloudSyncEnabled=false;const logged=!!user;status.textContent=logged?'מחובר לחשבון. טוען נתונים…':'עדיין לא מחובר לחשבון ענן.';email.disabled=logged;password.disabled=logged;submit.classList.toggle('hidden',logged);signup.classList.toggle('hidden',logged);logout.classList.toggle('hidden',!logged);if(!logged)showGate('התחבר או צור חשבון כדי להיכנס ל־MONEYTRACE.');}
+ function setSignedIn(user){window.mtUser=user;window.mtCloudSyncEnabled=false;window.dispatchEvent(new Event("mt:user-ready"));const logged=!!user;status.textContent=logged?'מחובר לחשבון. טוען נתונים…':'עדיין לא מחובר לחשבון ענן.';email.disabled=logged;password.disabled=logged;submit.classList.toggle('hidden',logged);signup.classList.toggle('hidden',logged);logout.classList.toggle('hidden',!logged);if(!logged)showGate('התחבר או צור חשבון כדי להיכנס ל־MONEYTRACE.');}
  function cacheCurrent(){localStorage.setItem(KEY,JSON.stringify(transactions));isDemo=false;render()}
  async function syncAll(){
   if(!window.mtUser||!window.mtCloudSyncEnabled)return;
