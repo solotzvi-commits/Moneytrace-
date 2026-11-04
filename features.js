@@ -238,7 +238,11 @@ renderBudgets();renderGoals();
   button.className = 'secondary';
   button.textContent = '🗑 מחיקת כל התנועות';
   button.style.cssText = 'border-color:#8c454b;color:#ff9da5';
-  toolbar.appendChild(button);
+  const row=document.createElement('div');
+  row.style.cssText='display:flex;justify-content:flex-start;margin:10px 0 14px';
+  button.style.cssText='border-color:#8c454b;color:#ff9da5;width:100%;max-width:260px';
+  row.appendChild(button);
+  toolbar.parentElement.insertAdjacentElement('afterend',row);
 
   button.addEventListener('click', async () => {
     const count = transactions.length;
