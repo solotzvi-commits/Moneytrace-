@@ -375,6 +375,7 @@ renderBudgets();renderGoals();
 
   function extendedAnswer(question){
     const q=String(question||'').toLowerCase(),a=analyze();
+    const deeper=window.moneytraceCoach22Reply?.(question); if(deeper!==null&&deeper!==undefined)return deeper;
     if(/תחז|סוף החודש|כמה.*יישאר|כמה.*אוציא.*בסוף/.test(q))return `תחזית ההוצאות שלי לסוף ${labelMonth(a.now)} היא ${cash(a.forecast)}. עד עכשיו נרשמו ${cash(a.spent)} ב־${a.elapsed} ימים, כלומר קצב של ${cash(a.spent/a.elapsed)} ליום. זו תחזית פשוטה שמניחה שהקצב יישאר דומה.`;
     if(/השוו|השווא|חודש קודם|יותר.*חודש שעבר|פחות.*חודש שעבר/.test(q))return a.prevToDate?`עד היום בחודש הקודם הוצאת ${cash(a.prevToDate)}. החודש הוצאת ${cash(a.spent)}. השינוי הוא ${Math.round((a.spent-a.prevToDate)/a.prevToDate*100)}%. ההשוואה נעשית לאותו מספר ימים, לא לחודש הקודם כולו.`:'אין מספיק נתונים להשוואה מול אותו שלב בחודש הקודם.';
     if(/חריג|קפצ|עליי|יוצא דופן|אנומל/.test(q))return a.anomalies.length?'מצאתי את החריגות הבאות ביחס להיסטוריה הזמינה:\n'+a.anomalies.map(x=>`• ${x.name}: ${cash(x.value)} עד היום, כ־${Math.round((x.ratio-1)*100)}% מעל קצב הבסיס.`).join('\n'):'לא זיהיתי כרגע חריגה מובהקת. צריך לפחות שתי תקופות קודמות עם פעילות בקטגוריה כדי להשוות בצורה סבירה.';
