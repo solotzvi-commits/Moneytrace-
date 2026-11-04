@@ -10,3 +10,27 @@
 
 /* MONEYTRACE profile, workspace and app settings */
 .profile-menu{position:fixed;z-index:50;top:78px;left:24px;width:min(290px,calc(100vw - 30px));padding:10px;background:#121d2c;border:1px solid #34445d;border-radius:16px;box-shadow:0 18px 55px #0009}.profile-menu-head{padding:10px 12px 13px;border-bottom:1px solid #2a3a52;margin-bottom:6px}.profile-menu-head b,.profile-menu-head small{display:block}.profile-menu-head b{font-size:13px;overflow-wrap:anywhere}.profile-menu-head small{font-size:11px;color:#8e9bb1;margin-top:3px}.profile-menu button{width:100%;display:block;text-align:right;padding:12px;border:0;border-radius:9px;background:transparent;color:#dce5f1;font:13px 'Heebo',sans-serif;cursor:pointer}.profile-menu button:hover{background:#1b2a3d;color:#70dfb6}.workspace-overlay{position:fixed;inset:0;z-index:60;background:#030711e8;display:grid;place-items:center;padding:18px;overflow:auto}.workspace-card{position:relative;width:min(100%,520px);padding:28px;background:#121d2c;border:1px solid #34445d;border-radius:22px;box-shadow:0 25px 90px #000b;text-align:center}.workspace-mark{display:grid;place-items:center;margin:0 auto 12px;width:52px;height:52px;border-radius:16px;background:#173e35;color:#6ee7b7;font-size:27px;font-weight:800}.workspace-card h2{font-size:21px;margin:8px 0}.workspace-card>p{font-size:12px;color:#9eacc0;line-height:1.7}.workspace-options{display:grid;gap:10px;margin:20px 0}.workspace-options button{display:grid;gap:5px;text-align:right;padding:15px;border:1px solid #31445d;border-radius:13px;background:#162438;color:#edf4fc;font:14px 'Heebo',sans-serif;cursor:pointer}.workspace-options button:hover{border-color:#55d6a5;background:#17352f}.workspace-options small{font-size:11px;color:#9eacc0}.workspace-note{font-size:11px!important;color:#8494aa!important}.settings-card{text-align:right;display:grid;gap:14px}.settings-card h2{margin:0 0 8px}.settings-card label{display:grid;gap:7px;font-size:12px;color:#aab7ca}.settings-card select{width:100%}.settings-actions{display:flex;gap:9px;flex-wrap:wrap}.settings-actions>*{flex:1}.settings-card .modal-close{top:12px}body.mt-light{--bg:#f3f6fa;--panel:#fff;--panel2:#f8fafc;--line:#dce3ec;--text:#182334;--muted:#64748b;background:#f3f6fa;color:#182334}body.mt-light .sidebar,body.mt-light .profile-menu,body.mt-light .workspace-card,body.mt-light .panel,body.mt-light .stat-card{background:#fff;color:#182334;border-color:#dce3ec}body.mt-light .nav-item,body.mt-light .profile-menu button{color:#475569}body.mt-large{font-size:18px}@media(max-width:700px){.profile-menu{top:66px;left:12px}.workspace-card{padding:22px 17px}}
+
+/* MONEYTRACE complete light theme */
+body.mt-light{background:#f3f6fa;color:#182334;--bg:#f3f6fa;--panel:#fff;--panel2:#f8fafc;--line:#dce3ec;--text:#182334;--muted:#64748b}
+body.mt-light .sidebar,body.mt-light .mobile-nav{background:#fff;border-color:#dce3ec}
+body.mt-light .brand,body.mt-light .topbar h1,body.mt-light .welcome-row h2,body.mt-light .section-intro h2,body.mt-light .panel-heading h3,body.mt-light .connect-hero h3{color:#182334}
+body.mt-light .nav-item,body.mt-light .eyebrow,body.mt-light .welcome-row p,body.mt-light .section-intro p,body.mt-light .panel-heading p,body.mt-light .legend-item,body.mt-light td,body.mt-light .merchant{color:#475569}
+body.mt-light .stat-card,body.mt-light .panel,body.mt-light .insight-card,body.mt-light .subscription-item,body.mt-light .bank-card,body.mt-light .business-stat,body.mt-light .business-section,body.mt-light .business-form,body.mt-light .business-row,body.mt-light .business-settings label,body.mt-light .business-type,body.mt-light .profile-menu,body.mt-light .workspace-card,body.mt-light .modal{background:#fff;color:#182334;border-color:#dce3ec;box-shadow:0 3px 14px #15243a0b}
+body.mt-light .business-hero{background:linear-gradient(130deg,#e7f2f7,#f6f9fc);border-color:#d5e1eb;color:#182334}
+body.mt-light .business-hero p,body.mt-light .business-section>p,body.mt-light .business-stat small,body.mt-light .business-row small,body.mt-light .business-muted,body.mt-light .business-type small{color:#64748b}
+body.mt-light .business-form input,body.mt-light .business-form select,body.mt-light input,body.mt-light select,body.mt-light .search{background:#fff;color:#182334;border-color:#cbd5e1}
+body.mt-light .secondary,body.mt-light .upload-button,body.mt-light .business-actions button,body.mt-light .business-chip{background:#eef3f8;color:#334155;border-color:#cbd5e1}
+body.mt-light .period-label,body.mt-light .category-tag,body.mt-light .merchant-icon,body.mt-light .subscription-logo{background:#eef3f8;color:#475569}
+body.mt-light .business-alert{background:#eaf7f0;color:#205c43;border-color:#b9dfca}
+body.mt-light .business-empty{color:#64748b;border-color:#cbd5e1}
+body.mt-light .business-type:has(input:checked){background:#e7f7f0;border-color:#4bb78e}
+body.mt-light .profile-menu button,body.mt-light .workspace-options button{color:#334155}
+body.mt-light .workspace-options button{background:#f8fafc;border-color:#dce3ec}
+body.mt-light .workspace-note,body.mt-light .settings-card label{color:#64748b!important}
+body.mt-light .donut:before{background:#fff}
+body.mt-light td{border-bottom-color:#e2e8f0}
+body.mt-light .notice{background:#fff8e8;border-color:#ead7a8}
+body.mt-light .notice p{color:#746344}
+body.mt-light .mobile-nav button{color:#64748b}
+body.mt-light .mobile-nav button.active{color:#16865f}

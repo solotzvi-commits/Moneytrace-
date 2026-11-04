@@ -1,7 +1,7 @@
 /* MONEYTRACE: edit transactions, monthly budgets, budget alerts and savings goals.
    Budgets/goals are local to this device; transactions use the app's existing save/sync. */
 (() => {
-const $=s=>document.querySelector(s), money=n=>'₪'+Number(n||0).toLocaleString('he-IL',{minimumFractionDigits:2,maximumFractionDigits:2}), month=()=>new Date().toISOString().slice(0,7);
+const $=s=>document.querySelector(s), money=n=>(window.moneyTraceFormatCurrency?window.moneyTraceFormatCurrency(n):'₪'+Number(n||0).toLocaleString('he-IL',{minimumFractionDigits:2,maximumFractionDigits:2})), month=()=>new Date().toISOString().slice(0,7);
 const read=(k,d)=>{try{return JSON.parse(localStorage.getItem(k))??d}catch{return d}};
 let budgets=read('moneytrace_budgets_v1',{}), goals=read('moneytrace_goals_v1',[]), editing=null;
 const css=document.createElement('style');css.textContent=`

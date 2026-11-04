@@ -2,7 +2,7 @@
 (()=>{
 'use strict';
 const PROFILE=()=>`moneytrace_business_profile_v1_user_${window.mtUser?.id||'local'}`, STORE=()=>`moneytrace_business_data_v1_user_${window.mtUser?.id||'local'}`;
-const $=s=>document.querySelector(s), money=n=>'₪'+Number(n||0).toLocaleString('he-IL',{minimumFractionDigits:0,maximumFractionDigits:2});
+const $=s=>document.querySelector(s), money=n=>(window.moneyTraceFormatCurrency?window.moneyTraceFormatCurrency(n):'₪'+Number(n||0).toLocaleString('he-IL',{minimumFractionDigits:0,maximumFractionDigits:2}));
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const today=()=>new Date().toISOString().slice(0,10), month=()=>today().slice(0,7);
 const TYPES={

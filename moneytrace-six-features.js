@@ -1,6 +1,6 @@
 /* MONEYTRACE six-feature update. Estimates are based only on user-entered transactions. */
 (()=>{'use strict';
- const $=s=>document.querySelector(s), money=n=>'₪'+Number(n||0).toLocaleString('he-IL',{maximumFractionDigits:0});
+ const $=s=>document.querySelector(s), money=n=>(window.moneyTraceFormatCurrency?window.moneyTraceFormatCurrency(n):'₪'+Number(n||0).toLocaleString('he-IL',{maximumFractionDigits:0}));
  const store=(k,v)=>{try{localStorage.setItem(k,String(v))}catch{}};
  const read=k=>{try{return localStorage.getItem(k)}catch{return null}};
  const dateNow=new Date(), ym=d=>`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`;
