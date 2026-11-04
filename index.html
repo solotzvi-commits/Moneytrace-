@@ -68,6 +68,22 @@
       <div class="section-intro"><div><h2>תובנות וחיסכון</h2><p>תובנות מבוססות על התנועות שלך — בלי לנחש.</p></div></div>
       <div class="insight-grid" id="insightGrid"></div>
       <article class="panel savings-panel"><div class="panel-heading"><div><h3>מחשבון חיסכון</h3><p>בדוק כמה כסף יכול להישאר אצלך אם מצמצמים הוצאה.</p></div></div><div class="savings-controls"><label>הוצאה חודשית לצמצום <input type="number" id="savingAmount" min="0" value="100"></label><label>אחוז צמצום <input type="range" id="savingPercent" min="5" max="100" value="25"><span id="savingPercentLabel">25%</span></label><div class="saving-result"><small>חיסכון אפשרי בשנה</small><b id="savingResult">₪300</b></div></div></article>
+
+      <article class="panel" id="mtSixFeatures" style="margin:16px 0">
+        <div class="panel-heading"><div><h3>מרכז שליטה חכם</h3><p>תחזית, כסף פנוי, אתגרים והתראות על בסיס התנועות שהזנת</p></div><span class="sparkle">✧</span></div>
+        <div class="insight-grid">
+          <div class="insight-card"><div class="i-icon">💳</div><h3>בטוח להוציא</h3><p id="mtSafeExplain">הערכה לפי התנועות שהוזנו החודש</p><strong id="mtSafe">—</strong><label style="display:block;margin-top:10px;font-size:11px;color:#9ba9bd">יתרת בנק נוכחית (אופציונלי)<input id="mtBankBalance" type="number" placeholder="הזן יתרה בש״ח" style="display:block;width:100%;margin-top:6px"></label></div>
+          <div class="insight-card"><div class="i-icon">📈</div><h3>תחזית סוף חודש</h3><p id="mtForecastExplain">תחזית לפי קצב ההוצאות וההכנסות הנוכחי</p><strong id="mtForecast">—</strong></div>
+          <div class="insight-card"><div class="i-icon">🔁</div><h3>מנויים ושינויי מחיר</h3><p id="mtSubsExplain">זיהוי חיובים חוזרים והשוואת סכומים</p><strong id="mtSubsCount">—</strong></div>
+          <div class="insight-card"><div class="i-icon">🚨</div><h3>התראות חכמות</h3><p id="mtAlerts">בודק חריגות, קצב הוצאות ושינויי מחיר</p><strong id="mtAlertCount">—</strong></div>
+        </div>
+        <div class="form-row" style="margin-top:12px">
+          <label>תקרת הוצאות חודשית (₪)<input id="mtMonthlyLimit" type="number" min="0" placeholder="למשל 5000"></label>
+          <label>יעד אתגר חיסכון לחודש (₪)<input id="mtChallengeGoal" type="number" min="1" placeholder="למשל 500"></label>
+        </div>
+        <div class="insight-box" style="margin-top:14px"><b>🏆 אתגר החיסכון שלך</b><p id="mtChallengeProgress">הגדר יעד כדי להתחיל אתגר חיסכון. ההתקדמות מחושבת לפי הפער בין היעד להוצאות בפועל ביחס לחודש הקודם.</p></div>
+        <div class="insight-box"><b>🤖 AI Coach — חיבור למודל AI</b><p id="mtAiStatus">הניתוחים המקומיים זמינים. כדי להפעיל תשובות GPT אמיתיות יש לפרוס את פונקציית Supabase ולהגדיר OPENAI_API_KEY בצד השרת.</p><div style="display:flex;gap:8px;margin-top:10px"><input id="mtAiQuestion" placeholder="שאל שאלה על ההתנהלות הפיננסית שלך" style="flex:1;min-width:0"><button class="secondary" id="mtAiAsk">שאל את המאמן</button></div><p id="mtAiAnswer" aria-live="polite"></p></div>
+      </article>
     </section>
     <section id="view-connect" class="view">
       <div class="section-intro"><div><h2>חיבור חשבון בנק</h2><p>ייבוא מאובטח של תנועות כדי לקבל תמונה פיננסית מלאה.</p></div><span class="soft-badge">בפיתוח</span></div>
@@ -95,5 +111,6 @@
 <script src="supabase-config.js"></script>
 <script src="app.js"></script>
 <script src="features.js"></script>
+<script src="moneytrace-six-features.js"></script>
 <script src="coach-2.2.js"></script>
 </body></html>
