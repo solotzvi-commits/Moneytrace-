@@ -42,5 +42,11 @@ jobs:
           if (!csp.includes("script-src-attr 'none'")) throw new Error('Inline event handlers must be blocked');
           const inlineScripts = [...html.matchAll(/<script(?![^>]*\bsrc=)[^>]*>([\s\S]*?)<\/script>/gi)].filter(m => m[1].trim());
           if (inlineScripts.length) throw new Error('Inline JavaScript blocks are not allowed');
-          console.log('CSP checks passed');
+          const app = fs.readFileSync('app.js', 'utf8');
+          const features = fs.readFileSync('features.js', 'utf8');
+          const business = fs.readFileSync('business-mode.js', 'utf8');
+          if (app.includes('data-id="${x.id}"')) throw new Error('Transaction IDs must be escaped in HTML attributes');
+          if (features.includes('data-id="${g.id}"')) throw new Error('Savings goal IDs must be escaped in HTML attributes');
+          if (business.includes('data-id="${x.id}"') || business.includes('data-biz-paid="${x.id}"')) throw new Error('Business record IDs must be escaped in HTML attributes');
+          console.log('CSP and generated-HTML safety checks passed');
           NODE
