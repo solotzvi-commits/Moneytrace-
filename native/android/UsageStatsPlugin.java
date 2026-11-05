@@ -64,7 +64,8 @@ public class UsageStatsPlugin extends Plugin {
             call.reject("נדרשת הרשאת גישה לנתוני שימוש בהגדרות Android");
             return;
         }
-        JSArray requested = call.getArray("packages", new JSArray());
+        JSArray requested = call.getArray("packages");
+        if (requested == null) requested = new JSArray();
         if (requested.length() > 30) {
             call.reject("ניתן לבדוק עד 30 אפליקציות בכל פעם");
             return;
