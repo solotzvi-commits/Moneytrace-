@@ -1,11 +1,11 @@
 /* MONEYTRACE Smart Subscriptions — value scoring from recurring charges + user-confirmed usage. */
 (()=>{'use strict';
- const KEY='moneytrace_smart_subscriptions_v1_'+(window.mtUser?.id||'local');
+ const key=()=>'moneytrace_smart_subscriptions_v1_'+(window.mtUser?.id||'local');
  const $=s=>document.querySelector(s);
  const money=n=>window.moneyTraceFormatCurrency?window.moneyTraceFormatCurrency(n):'₪'+Number(n||0).toLocaleString('he-IL',{maximumFractionDigits:2});
  const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
- const read=()=>{try{const x=JSON.parse(localStorage.getItem(KEY)||'{}');return x&&typeof x==='object'&&!Array.isArray(x)?x:{}}catch{return{}}};
- const save=x=>{try{localStorage.setItem(KEY,JSON.stringify(x))}catch{}};
+ const read=()=>{try{const x=JSON.parse(localStorage.getItem(key())||'{}');return x&&typeof x==='object'&&!Array.isArray(x)?x:{}}catch{return{}}};
+ const save=x=>{try{localStorage.setItem(key(),JSON.stringify(x))}catch{}};
  const known=[['netflix','Netflix'],['spotify','Spotify'],['youtube premium','YouTube Premium'],['youtube','YouTube'],['disney','Disney+'],['disney+','Disney+'],['apple music','Apple Music'],['apple tv','Apple TV+'],['amazon prime','Amazon Prime'],['prime video','Prime Video'],['chatgpt','ChatGPT'],['microsoft 365','Microsoft 365'],['google one','Google One'],['icloud','iCloud']];
  const serviceName=n=>{const s=String(n||'').toLowerCase();return known.find(([k])=>s.includes(k))?.[1]||String(n||'מנוי')};
  function detect(){
