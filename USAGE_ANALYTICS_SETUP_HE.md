@@ -2,9 +2,15 @@
 
 1. פתח Supabase Dashboard של פרויקט MONEYTRACE.
 2. היכנס ל־SQL Editor והרץ את הקובץ `supabase/usage-analytics.sql`.
-3. ב־Authentication → Users פתח את החשבון שלך. תחת **App Metadata** הגדר:
-   `{"role":"admin"}`
-   שמור את השינוי והתנתק/התחבר מחדש כדי לרענן את ה־JWT.
+3. הענק הרשאת מנהל לחשבון שלך דרך SQL Editor. החלף את כתובת האימייל בכתובת שאיתה אתה מתחבר ל־MONEYTRACE והריץ:
+
+   ```sql
+   update auth.users
+   set raw_app_meta_data = coalesce(raw_app_meta_data, '{}'::jsonb) || '{"role":"admin"}'::jsonb
+   where email = 'YOUR_LOGIN_EMAIL';
+   ```
+
+   לחלופין, אם ממשק Supabase שלך מאפשר עריכת **App Metadata**, הגדר שם `{"role":"admin"}`. התנתק והתחבר מחדש כדי לרענן את ה־JWT.
 4. היכנס ל־MONEYTRACE. בתפריט הניווט יופיע "נתוני שימוש" רק לחשבון שמכיל את תפקיד המנהל.
 
 ## מה נאסף
