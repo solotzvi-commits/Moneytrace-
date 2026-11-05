@@ -1,0 +1,45 @@
+name: MONEYTRACE Quality Checks
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    name: JavaScript and configuration validation
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Check JavaScript syntax
+        run: |
+          set -euo pipefail
+          for file in *.js; do
+            echo "Checking $file"
+            node --check "$file"
+          done
+      - name: Validate JSON configuration
+        run: |
+          node -e "for (const f of ['package.json','capacitor.config.json','manifest.webmanifest']) JSON.parse(require('node:fs').readFileSync(f,'utf8'))"
+      - name: Verify script CSP
+        run: |
+          node <<'NODE'
+          const fs = require('node:fs');
+          const html = fs.readFileSync('index.html', 'utf8');
+          const csp = html.match(/http-equiv="Content-Security-Policy" content="([^"]+)"/i)?.[1] || '';
+          if (!csp.includes("script-src 'self' https://cdn.jsdelivr.net")) throw new Error('Expected restrictive script-src policy');
+          if (csp.includes("'unsafe-inline'")) throw new Error('unsafe-inline must not be allowed for scripts');
+          if (!csp.includes("script-src-attr 'none'")) throw new Error('Inline event handlers must be blocked');
+          const inlineScripts = [...html.matchAll(/<script(?![^>]*\bsrc=)[^>]*>([\s\S]*?)<\/script>/gi)].filter(m => m[1].trim());
+          if (inlineScripts.length) throw new Error('Inline JavaScript blocks are not allowed');
+          console.log('CSP checks passed');
+          NODE
