@@ -52,3 +52,33 @@ body.mt-light .mobile-nav button.active{color:#16865f}
 body.mt-light .business-tabs{border-color:#dce3ec}
 body.mt-light .business-tab{background:#f8fafc;color:#475569;border-color:#dce3ec}
 body.mt-light .business-tab.active{background:#e7f7f0;color:#176b4c;border-color:#8bc9aa}
+
+
+/* Business dashboard and customer workspace */
+.business-dashboard-head{display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap;margin:8px 0 16px}
+.business-dashboard-head h3{font-size:22px;margin:5px 0}.business-dashboard-head p,.business-card-title p{color:#94a6ba;font-size:12px;margin:3px 0}
+.business-eyebrow{font-size:10px;letter-spacing:1.5px;color:#79c7a6;font-weight:800}
+.business-health{display:flex;align-items:center;gap:10px;padding:11px 14px;border:1px solid #275443;background:#102a25;border-radius:13px}
+.business-health>span{width:9px;height:9px;border-radius:50%;background:#55d49a}.business-health.warning{border-color:#76582b;background:#302516}.business-health.warning>span{background:#f0b75a}
+.business-health b,.business-health small{display:block}.business-health b{font-size:12px}.business-health small{font-size:10px;color:#aab7c8;margin-top:3px}
+.business-kpi-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;margin-bottom:14px}
+.business-kpi-grid .business-stat{margin:0;min-width:0}
+.business-quick-actions,.business-dashboard-card{background:var(--panel, #111d2b);border:1px solid var(--line,#26374b);border-radius:14px;padding:14px;margin-bottom:13px}
+.business-quick-actions{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap}
+.business-quick-actions>div:first-child b,.business-quick-actions small{display:block}.business-quick-actions small{font-size:11px;color:#94a6ba;margin-top:3px}
+.business-quick-buttons{display:flex;gap:7px;flex-wrap:wrap}.business-quick-buttons button,.business-link{border:1px solid #35506a;background:#17283a;color:#c8d8e9;border-radius:9px;padding:9px 11px;font:12px 'Heebo',sans-serif;cursor:pointer}
+.business-quick-buttons button:first-child{background:#174333;border-color:#34785d;color:#b9f2d8}
+.business-dashboard-columns{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:13px}
+.business-dashboard-card{min-width:0}.business-card-title{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:12px}.business-card-title h3,.business-card-title h4{margin:0;font-size:15px}
+.business-collection-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:12px 0}
+.business-collection-stats>div,.business-mini-metrics>div{background:rgba(130,160,190,.07);padding:10px;border-radius:10px}
+.business-collection-stats b,.business-collection-stats small{display:block}.business-collection-stats b{font-size:17px}.business-collection-stats small,.business-mini-metrics span{font-size:10px;color:#9aacc0}
+.business-mini-metrics{display:grid;grid-template-columns:repeat(2,1fr);gap:8px}.business-mini-metrics span,.business-mini-metrics b{display:block}.business-mini-metrics b{font-size:16px;margin-top:4px}
+.business-alert-danger{border-color:#79413d;background:rgba(120,45,40,.16);color:#ffc1b8}.business-alert-warning{border-color:#76582b;background:rgba(150,105,35,.14)}
+.business-bar-row{margin:13px 0}.business-bar-row>div:first-child{display:flex;justify-content:space-between;gap:8px;font-size:12px;margin-bottom:6px}.business-bar-track{height:7px;border-radius:9px;background:#26374b;overflow:hidden}.business-bar-track i{display:block;height:100%;border-radius:9px;background:linear-gradient(90deg,#2e9871,#80d7aa)}
+.business-customer-row{align-items:flex-start}.business-customer-row>div{display:grid;gap:3px}.business-customer-row small{display:block}
+#bizCustomerSearch{max-width:220px;min-width:130px}
+@media(max-width:760px){.business-kpi-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.business-dashboard-columns{grid-template-columns:1fr}.business-dashboard-head h3{font-size:19px}.business-quick-actions{align-items:flex-start}.business-quick-buttons{width:100%}.business-quick-buttons button{flex:1 1 42%}.business-card-title{align-items:flex-start;flex-wrap:wrap}}
+body.mt-light .business-quick-actions,body.mt-light .business-dashboard-card{background:#fff;border-color:#dce3ec}
+body.mt-light .business-quick-buttons button,body.mt-light .business-link{background:#f4f7fb;color:#34465d;border-color:#d7e0eb}
+body.mt-light .business-collection-stats>div,body.mt-light .business-mini-metrics>div{background:#f3f6fa}
