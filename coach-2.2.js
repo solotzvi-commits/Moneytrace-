@@ -3,7 +3,7 @@
 (() => {
   'use strict';
   const $ = s => document.querySelector(s);
-  const cash = n => '₪' + Math.round(Number(n || 0)).toLocaleString('he-IL');
+  const cash = n => window.moneyTraceFormatCurrency ? window.moneyTraceFormatCurrency(n) : '₪' + Math.round(Number(n || 0)).toLocaleString('he-IL');
   const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
   const txs = () => typeof transactions !== 'undefined' && Array.isArray(transactions) ? transactions.filter(t => t && Number.isFinite(Number(t.amount)) && Number(t.amount) >= 0 && /^\d{4}-\d{2}-\d{2}$/.test(String(t.date || ''))) : [];
   const date = s => { const [y,m,d] = String(s).split('-').map(Number); return new Date(y,m-1,d); };
