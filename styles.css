@@ -82,3 +82,53 @@ body.mt-light .business-tab.active{background:#e7f7f0;color:#176b4c;border-color
 body.mt-light .business-quick-actions,body.mt-light .business-dashboard-card{background:#fff;border-color:#dce3ec}
 body.mt-light .business-quick-buttons button,body.mt-light .business-link{background:#f4f7fb;color:#34465d;border-color:#d7e0eb}
 body.mt-light .business-collection-stats>div,body.mt-light .business-mini-metrics>div{background:#f3f6fa}
+
+
+/* MONEYTRACE B2B refresh — minimal Swiss workspace */
+#view-business{--biz-accent:#78a9ff;--biz-accent-soft:rgba(120,169,255,.11);--biz-border:rgba(148,163,184,.19)}
+#businessRoot{max-width:1440px;margin-inline:auto}
+#businessRoot .business-hero{background:transparent;border:0;border-bottom:1px solid var(--biz-border);border-radius:0;padding:8px 0 22px;margin:0 0 18px;box-shadow:none}
+#businessRoot .business-hero h2{font-size:clamp(21px,2.3vw,29px);font-weight:750;letter-spacing:-.5px;margin:10px 0 5px;color:var(--text)}
+#businessRoot .business-hero p{font-size:13px;line-height:1.7;color:var(--muted);margin:0}
+#businessRoot .business-chip{display:inline-flex;align-items:center;gap:6px;background:var(--biz-accent-soft);border:1px solid rgba(120,169,255,.24);border-radius:5px;padding:5px 8px;color:#9fc2ff;font-size:10px;font-weight:700;letter-spacing:.5px}
+#businessRoot .business-hero .secondary{border-radius:7px;background:transparent;border:1px solid var(--biz-border);color:var(--text);padding:9px 13px;min-height:40px}
+#businessRoot .business-tabs{gap:20px;padding:0 0 2px;margin:0 0 23px;border-bottom:1px solid var(--biz-border);scrollbar-width:none}
+#businessRoot .business-tab{position:relative;border:0;border-radius:0;background:transparent;color:var(--muted);padding:12px 2px 13px;font-size:13px;font-weight:500;transition:color .2s ease}
+#businessRoot .business-tab:hover{background:transparent;border:0;color:var(--text)}
+#businessRoot .business-tab.active{background:transparent;border:0;color:var(--biz-accent);font-weight:700}
+#businessRoot .business-tab.active:after{content:"";position:absolute;inset-inline:0;bottom:-2px;height:2px;background:var(--biz-accent);border-radius:2px}
+#businessRoot .business-page{min-height:260px}
+#businessRoot .business-dashboard-head{margin:0 0 19px}
+#businessRoot .business-dashboard-head h3{font-size:24px;font-weight:750;letter-spacing:-.4px;margin:5px 0}
+#businessRoot .business-eyebrow{color:var(--biz-accent);font-size:10px;letter-spacing:1px}
+#businessRoot .business-kpi-grid{gap:12px;margin-bottom:17px}
+#businessRoot .business-stat{background:var(--panel);border:1px solid var(--biz-border);border-radius:10px;box-shadow:none;padding:17px;transition:border-color .2s ease,transform .2s ease}
+#businessRoot .business-stat:hover{border-color:rgba(120,169,255,.4);transform:translateY(-1px)}
+#businessRoot .business-stat strong,#businessRoot .business-stat b{letter-spacing:-.25px}
+#businessRoot .business-quick-actions,#businessRoot .business-dashboard-card{background:var(--panel);border:1px solid var(--biz-border);border-radius:10px;box-shadow:none;padding:17px;margin-bottom:14px}
+#businessRoot .business-quick-actions small,#businessRoot .business-card-title p{color:var(--muted)}
+#businessRoot .business-quick-buttons button,#businessRoot .business-link{border:1px solid var(--biz-border);background:transparent;color:var(--text);border-radius:7px;padding:9px 13px;min-height:40px;transition:background .2s ease,border-color .2s ease}
+#businessRoot .business-quick-buttons button:hover,#businessRoot .business-link:hover{background:var(--biz-accent-soft);border-color:rgba(120,169,255,.45)}
+#businessRoot .business-quick-buttons button:first-child{background:#244b83;border-color:#315f9e;color:#fff}
+#businessRoot .business-card-title h3,#businessRoot .business-card-title h4{font-size:14px;font-weight:700}
+#businessRoot .business-collection-stats>div,#businessRoot .business-mini-metrics>div{background:rgba(148,163,184,.07);border:1px solid var(--biz-border);border-radius:8px}
+#businessRoot .business-health{border-radius:8px;box-shadow:none}
+#businessRoot .business-bar-track{background:rgba(148,163,184,.16)}
+#businessRoot .business-bar-track i{background:#5b9af0}
+#businessRoot .business-section,#businessRoot .business-form{border-radius:10px;box-shadow:none}
+#businessRoot input,#businessRoot select,#businessRoot textarea{border-radius:7px}
+#businessRoot button:focus-visible,#businessRoot a:focus-visible,#businessRoot input:focus-visible,#businessRoot select:focus-visible,#businessRoot textarea:focus-visible{outline:2px solid var(--biz-accent);outline-offset:2px}
+body.mt-light #view-business{--biz-accent:#245da8;--biz-accent-soft:rgba(36,93,168,.08);--biz-border:rgba(71,85,105,.18)}
+body.mt-light #businessRoot .business-chip{color:#245da8;border-color:rgba(36,93,168,.2)}
+body.mt-light #businessRoot .business-stat,body.mt-light #businessRoot .business-quick-actions,body.mt-light #businessRoot .business-dashboard-card{background:#fff;border-color:var(--biz-border);box-shadow:none}
+body.mt-light #businessRoot .business-quick-buttons button:first-child{background:#245da8;border-color:#245da8;color:#fff}
+body.mt-light #businessRoot .business-collection-stats>div,body.mt-light #businessRoot .business-mini-metrics>div{background:#f7f9fc;border-color:var(--biz-border)}
+@media(max-width:760px){
+ #businessRoot .business-hero{padding-bottom:17px;margin-bottom:14px}
+ #businessRoot .business-tabs{gap:17px;margin-bottom:18px}
+ #businessRoot .business-tab{padding:11px 1px 12px;font-size:12px}
+ #businessRoot .business-stat{padding:13px}
+ #businessRoot .business-quick-actions,#businessRoot .business-dashboard-card{padding:14px}
+ #businessRoot .business-dashboard-head h3{font-size:21px}
+}
+@media(prefers-reduced-motion:reduce){#businessRoot *,#businessRoot *:before,#businessRoot *:after{scroll-behavior:auto!important;transition:none!important;animation:none!important}}
