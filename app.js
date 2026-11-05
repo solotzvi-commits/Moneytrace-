@@ -93,7 +93,7 @@ render();calcSaving();
 
 // Full local backup and restore. No data is uploaded to a server.
 $('#backupJson').addEventListener('click',()=>{
- const payload={app:'MONEYTRACE',version:1,createdAt:new Date().toISOString(),transactions};
+ const payload={app:'MONEYTRACE',version:2,createdAt:new Date().toISOString(),transactions,preferences:{budgets:localStorage.getItem('moneytrace_budgets_v1'),goals:localStorage.getItem('moneytrace_goals_v1'),monthlyLimit:localStorage.getItem('mt_month_limit'),bankBalance:localStorage.getItem('mt_bank_balance'),challengeGoal:localStorage.getItem('mt_challenge_goal')}};
  const blob=new Blob([JSON.stringify(payload,null,2)],{type:'application/json'});
  const url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;a.download='moneytrace-backup-'+new Date().toISOString().slice(0,10)+'.json';a.click();
  setTimeout(()=>URL.revokeObjectURL(url),1000);showToast('קובץ הגיבוי הורד למכשיר');
@@ -110,8 +110,12 @@ $('#backupInput').addEventListener('change',async e=>{
    if(!description||description.length>120||!Number.isFinite(amount)||amount<=0||amount>100000000||!/^\d{4}-\d{2}-\d{2}$/.test(date)||Number.isNaN(Date.parse(date+'T12:00:00'))||!['income','expense'].includes(t.type)||!cats.includes(category))throw new Error('קובץ הגיבוי מכיל תנועה לא תקינה');
    return{id:newTransactionId(),description,category,date,type:t.type,amount};
   });
-  if(!confirm('השחזור יחליף את כל התנועות הקיימות במכשיר. להמשיך?'))return;
-  transactions=restored;save();render();showToast('הגיבוי שוחזר בהצלחה');
+  const preferences=data.preferences||{},safePrefs={};
+  if(preferences.budgets){const budgets=JSON.parse(preferences.budgets);if(!budgets||typeof budgets!=='object'||Array.isArray(budgets))throw new Error('מבנה התקציבים בגיבוי אינו תקין');for(const [m,catsMap] of Object.entries(budgets)){if(!/^\d{4}-\d{2}$/.test(m)||!catsMap||typeof catsMap!=='object'||Array.isArray(catsMap))throw new Error('מבנה התקציב בגיבוי אינו תקין');for(const [cat,value] of Object.entries(catsMap)){if(!cats.includes(cat)||!Number.isFinite(Number(value))||Number(value)<=0||Number(value)>100000000)throw new Error('נמצא תקציב לא תקין בגיבוי')}}safePrefs.budgets=JSON.stringify(budgets)}
+  if(preferences.goals){const goals=JSON.parse(preferences.goals);if(!Array.isArray(goals)||goals.length>100)throw new Error('מבנה יעדי החיסכון בגיבוי אינו תקין');const clean=goals.map(g=>{const name=String(g?.name??'').trim(),target=Number(g?.target),saved=Number(g?.saved||0);if(!name||name.length>50||!Number.isFinite(target)||target<=0||target>100000000||!Number.isFinite(saved)||saved<0||saved>100000000)throw new Error('נמצא יעד חיסכון לא תקין בגיבוי');return{id:Date.now().toString(36)+'_'+Math.random().toString(36).slice(2),name,target,saved}});safePrefs.goals=JSON.stringify(clean)}
+  for(const [field,key] of [['monthlyLimit','mt_month_limit'],['bankBalance','mt_bank_balance'],['challengeGoal','mt_challenge_goal']]){const value=preferences[field];if(value!==undefined&&value!==null&&value!==''){const n=Number(value);if(!Number.isFinite(n)||n<0||n>1000000000)throw new Error('נמצאה הגדרה מספרית לא תקינה בגיבוי');safePrefs[key]=String(n)}}
+  if(!confirm('השחזור יחליף את התנועות, התקציבים ויעדי החיסכון הקיימים במכשיר. להמשיך?'))return;
+  transactions=restored;for(const [key,value] of Object.entries(safePrefs))localStorage.setItem(key,value);save();render();showToast('הגיבוי המלא שוחזר בהצלחה');
  }catch(err){showToast(err.message||'לא ניתן לשחזר את קובץ הגיבוי')}
  finally{e.target.value=''}
 });
