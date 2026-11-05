@@ -82,7 +82,7 @@
     map[app.packageName]={foregroundMs30d:Number(app.foregroundMs30d||0),lastTimeUsed:Number(app.lastTimeUsed||0),lastUsedLabel,risk};
    });
    try{localStorage.setItem(usageKey(),JSON.stringify(map))}catch{}
-   render();if(status)status.textContent='הבדיקה הושלמה. נבדקו רק אפליקציות שמקושרות למנויים שזוהו.';
+   render();const freshStatus=$('#smartUsageStatus');if(freshStatus)freshStatus.textContent='הבדיקה הושלמה. נבדקו רק אפליקציות שמקושרות למנויים שזוהו.';
   }catch(e){if(status)status.textContent='לא הצלחנו לקרוא נתוני שימוש: '+(e?.message||'שגיאה לא ידועה')}
  }
  document.addEventListener('click',e=>{
@@ -90,7 +90,7 @@
   if(b.dataset.smartAction==='enable')enableUsage();
   if(b.dataset.smartAction==='refresh')refreshDeviceUsage();
  });
-\n document.addEventListener('change',e=>{const el=e.target;if(!el.matches('[data-smart-usage]'))return;const prefs=read();prefs[el.dataset.smartUsage]={...(prefs[el.dataset.smartUsage]||{}),usage:el.value,updatedAt:new Date().toISOString()};save(prefs);render()});
+document.addEventListener('change',e=>{const el=e.target;if(!el.matches('[data-smart-usage]'))return;const prefs=read();prefs[el.dataset.smartUsage]={...(prefs[el.dataset.smartUsage]||{}),usage:el.value,updatedAt:new Date().toISOString()};save(prefs);render()});
  window.renderSmartSubscriptions=render;
  const init=()=>{render();updateUsageStatus();const list=$('#subscriptionList');if(list&&'MutationObserver'in window)new MutationObserver(render).observe(list,{childList:true,subtree:true});};
  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',init);else init();
