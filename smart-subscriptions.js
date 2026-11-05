@@ -12,6 +12,7 @@
  const readUsage=()=>{try{return JSON.parse(localStorage.getItem(usageKey())||'{}')}catch{return{}}};
  const plugin=()=>window.Capacitor?.Plugins?.UsageStats||null;
  const usagePackages=[...new Set(Object.values(packageMap))];
+ const packageFor=s=>packageMap[s.key]||Object.entries(packageMap).find(([k])=>s.key.includes(k))?.[1];
  const serviceName=n=>{const s=String(n||'').toLowerCase();return known.find(([k])=>s.includes(k))?.[1]||String(n||'מנוי')};
  function detect(){
   const rows=Array.isArray(window.transactions)?window.transactions:[];
@@ -45,7 +46,7 @@
   const subs=detect(),prefs=read();
   if(!subs.length){host.innerHTML='<div class="smart-empty">ככל שיצטברו תנועות חוזרות, נוכל להעריך את התמורה מכל מנוי.</div>';return}
   const deviceUsage=readUsage();
-  const atRisk=subs.filter(s=>['never','rarely'].includes(prefs[s.key]?.usage)||deviceUsage[packageMap[s.key]]?.risk===true);
+  const atRisk=subs.filter(s=>['never','rarely'].includes(prefs[s.key]?.usage)||deviceUsage[packageFor(s)]?.risk===true);
   const annual=atRisk.reduce((n,s)=>n+s.monthly*12,0);
   host.innerHTML='<div class="smart-head"><div><h3>SMART SUBSCRIPTIONS</h3><p>האם המנויים שלך באמת שווים את הכסף?</p></div><span class="smart-pill">ניתוח תמורה</span></div>'+
    '<div class="smart-usage-controls"><button type="button" class="secondary" data-smart-action="enable">הפעל מדידת שימוש באנדרואיד</button><button type="button" class="secondary" data-smart-action="refresh">בדוק שימוש עכשיו</button><small id="smartUsageStatus">המדידה אופציונלית וזמינה רק באפליקציית Android המותקנת.</small></div>'+
