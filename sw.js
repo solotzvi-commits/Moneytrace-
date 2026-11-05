@@ -1,4 +1,4 @@
-const CACHE='moneytrace-release-v20';
+const CACHE='moneytrace-release-v21';
 const ASSETS=['./','./index.html','./styles.css','./app.js','./features.js','./moneytrace-six-features.js','./coach-2.2.js','./business-mode.js','./profile-settings.js','./supabase-config.js','./manifest.webmanifest','./assets/icon-192.png','./assets/icon-512.png'];
 self.addEventListener('install',event=>event.waitUntil((async()=>{const cache=await caches.open(CACHE);await Promise.all(ASSETS.map(async path=>{try{const response=await fetch(path,{cache:'reload'});if(response.ok)await cache.put(path,response);}catch(error){console.warn('MONEYTRACE cache skipped:',path,error);}}));await self.skipWaiting();})()));
 self.addEventListener('activate',event=>event.waitUntil((async()=>{const keys=await caches.keys();await Promise.all(keys.filter(key=>key!==CACHE).map(key=>caches.delete(key)));await self.clients.claim();})()));
