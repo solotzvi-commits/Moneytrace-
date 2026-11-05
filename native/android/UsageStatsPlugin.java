@@ -78,7 +78,7 @@ public class UsageStatsPlugin extends Plugin {
             return;
         }
 
-        Map<String, UsageStats> totals = new HashMap<>();
+        Map<String, long[]> totals = new HashMap<>();
         List<UsageStats> stats = manager.queryUsageStats(
                 UsageStatsManager.INTERVAL_DAILY, start, end);
         if (stats != null) {
@@ -95,25 +95,22 @@ public class UsageStatsPlugin extends Plugin {
                     } catch (JSONException ignored) { }
                 }
                 if (!allowed) continue;
-                UsageStats previous = totals.get(packageName);
-                if (previous == null) {
-                    totals.put(packageName, stat);
-                } else {
-                    // Aggregate foreground time across daily records; preserve most recent use.
-                    previous = new UsageStats(previous);
-                    previous.add(stat);
-                    totals.put(packageName, previous);
+                long[] aggregate = totals.get(packageName);
+                if (aggregate == null) {
+                    aggregate = new long[] { 0L, 0L };
+                    totals.put(packageName, aggregate);
                 }
+                aggregate[0] += stat.getTotalTimeInForeground();
+                aggregate[1] = Math.max(aggregate[1], stat.getLastTimeUsed());
             }
         }
 
         JSArray output = new JSArray();
-        for (Map.Entry<String, UsageStats> entry : totals.entrySet()) {
-            UsageStats stat = entry.getValue();
+        for (Map.Entry<String, long[]> entry : totals.entrySet()) {
             JSObject item = new JSObject();
             item.put("packageName", entry.getKey());
-            item.put("foregroundMs30d", stat.getTotalTimeInForeground());
-            item.put("lastTimeUsed", stat.getLastTimeUsed());
+            item.put("foregroundMs30d", entry.getValue()[0]);
+            item.put("lastTimeUsed", entry.getValue()[1]);
             output.put(item);
         }
         JSObject result = new JSObject();
