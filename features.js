@@ -51,7 +51,7 @@ renderBudgets();renderGoals();
 /* SMART SAVINGS: weekly estimated savings, savings destinations and personalized ideas. */
 (() => {
   const $ = s => document.querySelector(s);
-  const cash = n => '₪' + Math.round(Number(n||0)).toLocaleString('he-IL');
+  const cash = n => window.moneyTraceFormatCurrency ? window.moneyTraceFormatCurrency(n) : '₪' + Math.round(Number(n||0)).toLocaleString('he-IL');
   const read = (k,d) => { try { return JSON.parse(localStorage.getItem(k)) ?? d; } catch { return d; } };
   let goals = read('moneytrace_goals_v1', []);
   const saveGoals = () => localStorage.setItem('moneytrace_goals_v1', JSON.stringify(goals));
@@ -124,7 +124,7 @@ renderBudgets();renderGoals();
    It does not call an external AI model or transmit chat messages. */
 (() => {
   const $ = s => document.querySelector(s);
-  const cash = n => '₪' + Number(n || 0).toLocaleString('he-IL', {maximumFractionDigits: 0});
+  const cash = n => window.moneyTraceFormatCurrency ? window.moneyTraceFormatCurrency(n) : '₪' + Number(n || 0).toLocaleString('he-IL', {maximumFractionDigits: 0});
   const read = (key, fallback) => { try { return JSON.parse(localStorage.getItem(key)) ?? fallback; } catch { return fallback; } };
   const today = new Date();
   const monthKey = today.toISOString().slice(0, 7);
@@ -281,7 +281,7 @@ renderBudgets();renderGoals();
    All calculations run on the user's device. No external AI model is called. */
 (() => {
   const $ = s => document.querySelector(s);
-  const cash = n => '₪' + Math.round(Number(n || 0)).toLocaleString('he-IL');
+  const cash = n => window.moneyTraceFormatCurrency ? window.moneyTraceFormatCurrency(n) : '₪' + Math.round(Number(n || 0)).toLocaleString('he-IL');
   const valid = () => typeof transactions !== 'undefined' && Array.isArray(transactions) ? transactions.filter(t => t && Number.isFinite(Number(t.amount)) && Number(t.amount) >= 0 && /^\d{4}-\d{2}-\d{2}$/.test(String(t.date || ''))) : [];
   const localDate = d => new Date(d.getFullYear(), d.getMonth(), d.getDate());
   const key = d => `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`;
