@@ -15,7 +15,7 @@
  const packageFor=s=>packageMap[s.key]||Object.entries(packageMap).find(([k])=>s.key.includes(k))?.[1];
  const serviceName=n=>{const s=String(n||'').toLowerCase();return known.find(([k])=>s.includes(k))?.[1]||String(n||'מנוי')};
  function detect(){
-  const rows=Array.isArray(window.transactions)?window.transactions:[];
+  const rows=typeof transactions!=='undefined'&&Array.isArray(transactions)?transactions:[];
   const groups=new Map();
   rows.filter(t=>t.type==='expense').forEach(t=>{const name=String(t.description||'').trim();if(!name)return;const k=name.toLowerCase();if(!groups.has(k))groups.set(k,[]);groups.get(k).push(t)});
   return [...groups.entries()].flatMap(([key,items])=>{
