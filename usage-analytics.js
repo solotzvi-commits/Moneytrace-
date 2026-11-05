@@ -52,6 +52,5 @@ document.addEventListener('click',e=>{
 
 });
 window.addEventListener('mt:user-ready',()=>{if(window.mtUser)setAdminVisibility(window.mtUser)});
-})();
-
 document.addEventListener('submit',e=>{if(e.target?.id==='transactionForm')record('transaction_created')});
+})();
