@@ -16,6 +16,6 @@
     "@capacitor/cli": "^7.4.3",
     "@capacitor/android": "^7.4.3",
     "@capacitor/ios": "^7.4.3",
-    "@capacitor/assets": "^3.0.5"
+    "@capacitor/assets": "^4.0.0"
   }
 }
