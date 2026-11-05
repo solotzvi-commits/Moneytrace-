@@ -4,7 +4,7 @@
   <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
   <meta name="referrer" content="strict-origin-when-cross-origin">
   <meta http-equiv="Permissions-Policy" content="camera=(), microphone=(), geolocation=()">
-  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; base-uri 'self'; object-src 'none'; frame-src 'none'; form-action 'self' https://*.supabase.co; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https:; font-src 'self' data:; connect-src 'self' https://*.supabase.co wss://*.supabase.co https://api.frankfurter.dev; worker-src 'self' blob: https://cdn.jsdelivr.net; upgrade-insecure-requests">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; base-uri 'self'; object-src 'none'; frame-src 'none'; form-action 'self' https://*.supabase.co; script-src 'self' https://cdn.jsdelivr.net; script-src-attr 'none'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https:; font-src 'self' data:; connect-src 'self' https://*.supabase.co wss://*.supabase.co https://api.frankfurter.dev; worker-src 'self' blob: https://cdn.jsdelivr.net; upgrade-insecure-requests">
   <meta name="theme-color" content="#090e19"><meta name="description" content="MONEYTRACE — להבין לאן הכסף הולך, לזהות מנויים ולחסוך יותר.">
   <link rel="manifest" href="manifest.webmanifest"><link rel="stylesheet" href="styles.css">
   <title>MONEYTRACE — לאן הכסף נעלם?</title>
@@ -117,7 +117,7 @@
 <div id="settingsOverlay" class="workspace-overlay hidden"><section class="workspace-card settings-card"><button class="modal-close" id="settingsClose">×</button><h2>הגדרות האפליקציה</h2><label>ערכת נושא<select id="settingTheme"><option value="dark">כהה</option><option value="light">בהירה</option></select></label><label>מטבע תצוגה<select id="settingCurrency"><option value="ILS">שקל ישראלי (₪)</option><option value="USD">דולר ($)</option><option value="EUR">אירו (€)</option><option value="GBP">ליש״ט (£)</option></select><small id="fxStatus" class="workspace-note">שערי המרה מתעדכנים אוטומטית.</small></label><label>גודל טקסט<select id="settingFont"><option value="normal">רגיל</option><option value="large">גדול</option></select></label><div class="settings-actions"><button class="primary" id="settingsSave">שמירת הגדרות</button><button class="secondary" id="settingsExport">ייצוא תנועות אישיות</button></div><p class="workspace-note">ההגדרות נשמרות במכשיר. סכומי המקור נשמרים בשקלים ומוצגים במטבע שבחרת לפי שער ייחוס יומי. זה אינו שער בנק או שער עסקה מובטח.</p></section></div>
 <div class="toast" id="toast" role="status"></div>
 <script src="https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/build/pdf.min.js"></script>
-<script>if(window.pdfjsLib)pdfjsLib.GlobalWorkerOptions.workerSrc="https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/build/pdf.worker.min.js";</script>
+<script src="pdfjs-config.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="supabase-config.js"></script>
 <script src="app.js"></script>
