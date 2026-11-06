@@ -222,3 +222,102 @@ body.mt-light .mobile-nav{background:rgba(255,255,255,.96);border-color:#dce3ec}
  .panel{padding:15px}
 }
 @media(prefers-reduced-motion:reduce){.main *, .sidebar *, .mobile-nav *{scroll-behavior:auto!important;transition:none!important;animation:none!important}}
+
+
+/* PERSONAL AREA — visible layout refresh v2 */
+#mainApp .main{background:transparent}
+#mainApp .topbar{align-items:flex-end;padding:0 0 20px;margin-bottom:28px;border-bottom:1px solid rgba(148,163,184,.22)}
+#mainApp .topbar h1{font-size:29px;font-weight:800;letter-spacing:-.8px}
+#mainApp .topbar .eyebrow{font-size:11px;letter-spacing:.25px}
+#mainApp .sidebar{width:252px;background:#0a111e;border-left:1px solid #253349;padding:30px 17px 22px}
+#mainApp .brand{font-size:16px;gap:12px}
+#mainApp .brand-mark{width:42px;height:42px;border-radius:12px;background:#dceaff;color:#18365f;font-size:22px;box-shadow:none}
+#mainApp .sidebar nav{margin-top:52px;gap:6px}
+#mainApp .nav-item{padding:13px 14px;border-radius:9px;color:#91a0b5;font-size:13px;gap:12px}
+#mainApp .nav-item span{font-size:17px;color:#8293aa}
+#mainApp .nav-item.active{background:#1a2d47;color:#d6e6ff;box-shadow:inset -3px 0 0 #79a9f2}
+#mainApp .nav-item.active span{color:#9fc3ff}
+#mainApp .nav-item:hover:not(.active){background:#121f30;color:#e5edf8}
+#mainApp .welcome-row{padding:23px 24px;margin:0 0 18px;border:1px solid #2a3d58;border-radius:12px;background:linear-gradient(110deg,#142943 0%,#111c2d 72%);align-items:center}
+#mainApp .welcome-row h2{font-size:21px;font-weight:750;letter-spacing:-.35px;color:#f4f7fc}
+#mainApp .welcome-row p{color:#a6b5c9;font-size:12px}
+#mainApp .welcome-row .primary{padding:12px 18px;background:#dceaff;color:#17365e;font-weight:800;border:0}
+#mainApp .stat-grid{gap:12px;margin-bottom:16px}
+#mainApp .stat-card{min-height:128px;padding:19px 18px;border-radius:11px;background:#111b2a;border:1px solid #29394f;box-shadow:none;display:flex;flex-direction:column;justify-content:center}
+#mainApp .stat-card.balance-card{background:#142943;border-color:#35567e}
+#mainApp .stat-card .stat-label{font-size:11px;color:#a8b6c9}
+#mainApp .stat-card .stat-value{font-size:28px;font-weight:800;letter-spacing:-1px;margin-top:12px;color:#f5f8fc}
+#mainApp .stat-card.balance-card .stat-value{color:#c9e0ff}
+#mainApp .stat-card .stat-foot{margin-top:6px;color:#8ea0b7}
+#mainApp .balance-glow{display:none}
+#mainApp .content-grid{grid-template-columns:minmax(0,1.15fr) minmax(280px,.85fr);gap:14px;margin-bottom:15px}
+#mainApp .panel{padding:20px;border-radius:11px;background:#111b2a;border:1px solid #29394f;box-shadow:none}
+#mainApp .panel-heading{align-items:center;margin-bottom:17px}
+#mainApp .panel-heading h3{font-size:14px;font-weight:750;color:#edf3fb}
+#mainApp .panel-heading p{font-size:11px;color:#8fa0b6}
+#mainApp .period-label{background:#1b2c42;color:#b6c8df;border:1px solid #30445e;border-radius:6px}
+#mainApp .insight-box{background:#17283c;border:1px solid #334e6c;border-radius:9px;padding:16px}
+#mainApp .insight-box b{color:#c6ddff}
+#mainApp .insight-box p{color:#aebdd0}
+#mainApp .text-button{color:#9fc3ff}
+#mainApp .donut{width:166px;height:166px}
+#mainApp .donut:before{width:118px;height:118px;background:#111b2a}
+#mainApp .legend-item{color:#c4cfdd}
+#mainApp .recent-panel{margin-top:0}
+#mainApp .recent-panel table{min-width:500px}
+#mainApp th{color:#8293aa;border-bottom-color:#2b3b51}
+#mainApp td{color:#d0d9e6;border-bottom-color:#202e41}
+#mainApp .merchant{color:#eef3fb}
+#mainApp .merchant-icon{background:#1c2e45;color:#a9caff;border-radius:8px}
+#mainApp .category-tag{background:#1c2b40;color:#b3c3d8;border-radius:5px}
+#mainApp .section-intro{padding:5px 0 16px;border-bottom:1px solid rgba(148,163,184,.17);margin-bottom:17px}
+#mainApp .section-intro h2{font-size:22px;font-weight:800;letter-spacing:-.4px}
+#mainApp .section-intro p{color:#91a1b7}
+#mainApp .filter-panel{background:#111b2a;border:1px solid #29394f;border-radius:10px;padding:12px}
+#mainApp .search,#mainApp input,#mainApp select{background:#0d1726;border:1px solid #304159;color:#e5edf8;border-radius:7px}
+#mainApp .secondary,#mainApp .upload-button{background:#17263a;border:1px solid #344962;color:#c9d8ea;border-radius:7px}
+#mainApp .subscription-item,#mainApp .insight-card,#mainApp .bank-card{background:#111b2a;border:1px solid #29394f;border-radius:10px;box-shadow:none}
+#mainApp .insight-card h3{color:#eef3fb}
+#mainApp .insight-card p{color:#9eafc4}
+#mainApp .insight-card strong{color:#c1ddff}
+#mainApp .connect-icon{background:#1a2d47;color:#a9caff;border-radius:11px}
+#mainApp .notice{border-radius:9px}
+#mainApp .mobile-nav{background:#0a111e;border-top:1px solid #2a3b51}
+#mainApp .mobile-nav button.active{color:#a9caff}
+body.mt-light #mainApp .welcome-row{background:linear-gradient(110deg,#e8f1fd,#f6f9fd);border-color:#cbdcf2}
+body.mt-light #mainApp .welcome-row h2{color:#182b43}
+body.mt-light #mainApp .welcome-row p{color:#586b82}
+body.mt-light #mainApp .welcome-row .primary{background:#245da8;color:#fff}
+body.mt-light #mainApp .sidebar{background:#fff;border-color:#dce3ec}
+body.mt-light #mainApp .brand-mark{background:#e4eefb;color:#245da8}
+body.mt-light #mainApp .nav-item{color:#52647a}
+body.mt-light #mainApp .nav-item.active{background:#edf4fd;color:#245da8;box-shadow:inset -3px 0 0 #245da8}
+body.mt-light #mainApp .nav-item.active span{color:#245da8}
+body.mt-light #mainApp .stat-card,body.mt-light #mainApp .panel,body.mt-light #mainApp .subscription-item,body.mt-light #mainApp .insight-card,body.mt-light #mainApp .bank-card{background:#fff;border-color:#dce3ec}
+body.mt-light #mainApp .stat-card.balance-card{background:#edf4fd;border-color:#cbdcf2}
+body.mt-light #mainApp .stat-card .stat-value{color:#182b43}
+body.mt-light #mainApp .stat-card.balance-card .stat-value{color:#245da8}
+body.mt-light #mainApp .panel-heading h3,body.mt-light #mainApp .insight-card h3{color:#182b43}
+body.mt-light #mainApp .insight-box{background:#f0f5fb;border-color:#d3e0f0}
+body.mt-light #mainApp .insight-box b{color:#245da8}
+body.mt-light #mainApp .insight-box p{color:#52647a}
+body.mt-light #mainApp .period-label,body.mt-light #mainApp .category-tag{background:#f1f5f9;color:#52647a;border-color:#dce3ec}
+body.mt-light #mainApp .merchant{color:#243449}
+body.mt-light #mainApp .merchant-icon{background:#edf3fa;color:#245da8}
+body.mt-light #mainApp td{color:#33465c;border-bottom-color:#e7edf4}
+body.mt-light #mainApp .mobile-nav{background:rgba(255,255,255,.97);border-color:#dce3ec}
+@media(max-width:1100px){#mainApp .content-grid{grid-template-columns:1fr}}
+@media(max-width:700px){
+ #mainApp .topbar{align-items:center;padding-bottom:13px;margin-bottom:18px}
+ #mainApp .topbar h1{font-size:23px}
+ #mainApp .welcome-row{padding:18px;gap:14px}
+ #mainApp .welcome-row h2{font-size:18px;line-height:1.45}
+ #mainApp .welcome-row .primary{width:100%}
+ #mainApp .stat-card{min-height:112px;padding:14px 13px}
+ #mainApp .stat-card .stat-value{font-size:22px}
+ #mainApp .content-grid{grid-template-columns:1fr;gap:10px}
+ #mainApp .panel{padding:15px}
+ #mainApp .donut{width:132px;height:132px}
+ #mainApp .donut:before{width:92px;height:92px}
+ #mainApp .section-intro h2{font-size:19px}
+}
