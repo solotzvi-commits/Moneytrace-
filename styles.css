@@ -321,3 +321,82 @@ body.mt-light #mainApp .mobile-nav{background:rgba(255,255,255,.97);border-color
  #mainApp .donut:before{width:92px;height:92px}
  #mainApp .section-intro h2{font-size:19px}
 }
+
+
+/* Personal dashboard v3 — rebuilt layout, not a color-only override */
+.personal-dashboard-v3{max-width:1240px;margin:0 auto}
+.personal-welcome{display:flex;align-items:center;justify-content:space-between;gap:18px;padding:10px 0 24px;margin-bottom:18px;border-bottom:1px solid var(--line)}
+.personal-kicker{display:block;color:#83aee9;font-size:9px;font-weight:800;letter-spacing:1.7px;margin-bottom:8px}
+.personal-welcome h2{font-size:clamp(22px,2.3vw,30px);line-height:1.25;letter-spacing:-.8px;margin:0 0 7px;font-weight:800}
+.personal-welcome p{margin:0;color:var(--muted);font-size:12px}
+.personal-add{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-width:160px;min-height:46px;border-radius:8px;background:#d9e8ff!important;color:#17365e!important;box-shadow:none!important;font-weight:800}
+.personal-balance-panel{position:relative;overflow:hidden;padding:24px 26px;margin-bottom:13px;border-radius:13px;border:1px solid #34577f;background:linear-gradient(112deg,#193653 0%,#14263d 54%,#111d30 100%);color:#f7faff}
+.personal-balance-panel:after{content:"";position:absolute;width:270px;height:270px;border:1px solid rgba(190,216,255,.09);border-radius:50%;left:-85px;top:-155px;box-shadow:0 0 0 28px rgba(190,216,255,.025),0 0 0 58px rgba(190,216,255,.02)}
+.personal-balance-top{display:flex;align-items:center;justify-content:space-between;gap:10px;position:relative;z-index:1}
+.personal-label{display:block;color:#c1d2e8;font-size:12px;font-weight:600}
+.personal-period{display:block;color:#8fa8c4;font-size:10px;margin-top:4px}
+.personal-balance-icon{display:grid;place-items:center;width:39px;height:39px;border:1px solid #54759a;border-radius:10px;color:#c6dcfa;font-size:20px}
+.personal-balance-value{position:relative;z-index:1;font-size:clamp(34px,5vw,48px);font-weight:800;letter-spacing:-1.7px;line-height:1.2;margin:17px 0 9px;direction:ltr;text-align:right}
+.personal-balance-foot{position:relative;z-index:1;color:#a9c0d9;font-size:10px;display:flex;align-items:center;gap:7px}
+.personal-balance-dot{width:7px;height:7px;background:#69d6ad;border-radius:50%}
+.personal-metrics{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;margin-bottom:16px}
+.personal-metric{min-width:0;padding:17px 18px;background:var(--panel);border:1px solid var(--line);border-radius:11px}
+.personal-metric-head{display:flex;align-items:center;gap:8px;color:var(--muted);font-size:11px}
+.personal-metric-icon{display:grid;place-items:center;width:25px;height:25px;border-radius:7px;background:rgba(148,163,184,.1);font-size:14px;color:#b8cde7}
+.income-metric .personal-metric-icon{color:#69d6ad;background:rgba(85,214,165,.1)}
+.expense-metric .personal-metric-icon{color:#f19b9f;background:rgba(241,126,134,.1)}
+.personal-metric strong{display:block;margin-top:13px;font-size:clamp(19px,2vw,25px);font-weight:800;letter-spacing:-.5px;direction:ltr;text-align:right;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.personal-metric small{display:block;margin-top:4px;color:var(--muted);font-size:10px}
+.personal-analysis-grid{display:grid;grid-template-columns:minmax(0,1.15fr) minmax(280px,.85fr);gap:13px;margin-bottom:13px}
+.personal-module{min-width:0;padding:20px;background:var(--panel);border:1px solid var(--line);border-radius:11px}
+.personal-module-heading{display:flex;align-items:flex-start;justify-content:space-between;gap:10px;margin-bottom:16px}
+.personal-module-heading h3{font-size:15px;font-weight:800;margin:0 0 4px;color:var(--text)}
+.personal-module-heading p{font-size:10px;color:var(--muted);margin:0}
+.personal-module-heading .personal-kicker{font-size:8px;margin-bottom:6px}
+.personal-period-chip{flex:none;border:1px solid var(--line);border-radius:6px;padding:6px 9px;color:var(--muted);font-size:10px}
+.personal-insight-mark{display:grid;place-items:center;width:32px;height:32px;border-radius:9px;background:rgba(120,169,255,.1);color:#9fc3ff}
+.personal-spending .spending-layout{min-height:180px;gap:20px}
+.personal-spending .donut-wrap{width:165px;flex-basis:165px}
+.personal-spending .donut{width:154px;height:154px}
+.personal-spending .donut:before{width:108px;height:108px;background:var(--panel)}
+.personal-spending .donut-center b{font-size:16px}
+.personal-spending .legend{gap:10px}
+.personal-insight .insight-box{margin:4px 0 13px;padding:15px;background:rgba(120,169,255,.07);border:1px solid rgba(120,169,255,.2);border-radius:8px}
+.personal-insight .insight-box b{color:#bcd6fa}
+.personal-insight .insight-box p{color:var(--muted);font-size:11px;line-height:1.7}
+.personal-recent{margin-bottom:16px}
+.personal-recent .personal-module-heading{align-items:center}
+.personal-recent table{min-width:470px}
+.personal-recent th{padding-top:8px;padding-bottom:10px}
+.personal-recent td{padding-top:12px;padding-bottom:12px}
+body.mt-light .personal-balance-panel{background:linear-gradient(112deg,#e5effc,#f4f8fd);border-color:#c6d8ef;color:#172b43}
+body.mt-light .personal-label{color:#3c5573}
+body.mt-light .personal-period,body.mt-light .personal-balance-foot{color:#60758f}
+body.mt-light .personal-balance-icon{border-color:#bfd0e5;color:#245da8}
+body.mt-light .personal-metric,body.mt-light .personal-module{background:#fff;border-color:#dce3ec}
+body.mt-light .personal-metric-head,body.mt-light .personal-metric small{color:#64748b}
+body.mt-light .personal-module-heading h3{color:#182b43}
+body.mt-light .personal-insight .insight-box{background:#f0f5fb;border-color:#d3e0f0}
+body.mt-light .personal-insight .insight-box b{color:#245da8}
+body.mt-light .personal-spending .donut:before{background:#fff}
+@media(max-width:900px){.personal-analysis-grid{grid-template-columns:1fr}}
+@media(max-width:700px){
+ .personal-welcome{align-items:flex-start;flex-direction:column;padding:5px 0 17px;gap:14px;margin-bottom:14px}
+ .personal-welcome h2{font-size:21px}
+ .personal-add{width:100%;min-height:46px}
+ .personal-balance-panel{padding:19px 18px;margin-bottom:10px}
+ .personal-balance-value{font-size:36px;margin:14px 0 8px}
+ .personal-metrics{grid-template-columns:repeat(2,minmax(0,1fr));gap:9px;margin-bottom:11px}
+ .personal-metric{padding:13px;border-radius:9px}
+ .personal-metric:last-child{grid-column:1/-1}
+ .personal-metric strong{font-size:21px;margin-top:10px}
+ .personal-analysis-grid{grid-template-columns:1fr;gap:10px;margin-bottom:10px}
+ .personal-module{padding:15px;border-radius:9px}
+ .personal-spending .spending-layout{gap:8px;justify-content:space-between}
+ .personal-spending .donut-wrap{width:125px;flex-basis:125px}
+ .personal-spending .donut{width:120px;height:120px}
+ .personal-spending .donut:before{width:84px;height:84px}
+ .personal-spending .donut-center b{font-size:13px}
+ .personal-spending .legend{gap:8px}
+ .personal-recent .personal-module-heading{align-items:flex-start}
+}
