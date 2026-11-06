@@ -20,5 +20,17 @@ function profitAndLoss(entries){const tb=trialBalance(entries),income=round(tb.f
 function balanceSheet(entries){const tb=trialBalance(entries),pl=profitAndLoss(entries),assets=round(tb.filter(a=>a.type==='asset').reduce((n,a)=>n+a.balance,0)),liabilities=round(tb.filter(a=>a.type==='liability').reduce((n,a)=>n-a.balance,0)),equityPosted=round(tb.filter(a=>a.type==='equity').reduce((n,a)=>n-a.balance,0)),equity=round(equityPosted+pl.net);return{assets,liabilities,equity,liabilitiesAndEquity:round(liabilities+equity),difference:round(assets-liabilities-equity)};}
 function cashMovement(entries){return round((entries||[]).reduce((t,e)=>t+(e.lines||[]).filter(l=>l.account==='1000').reduce((n,l)=>n+Number(l.debit||0)-Number(l.credit||0),0),0));}
 function summarize(entries){const tb=trialBalance(entries),pl=profitAndLoss(entries),bs=balanceSheet(entries);return{trialBalance:tb,profitAndLoss:pl,balanceSheet:bs,cashMovement:cashMovement(entries),isBalanced:Math.abs(bs.difference)<0.01};}
-const api={ACCOUNTS,round,validateJournal,trialBalance,profitAndLoss,balanceSheet,cashMovement,summarize};root.MTBusinessAccounting=api;if(typeof module!=='undefined'&&module.exports)module.exports=api;
+function reverseJournal(entry,reason,date){
+ if(!entry||!Array.isArray(entry.lines))throw new Error('A valid original journal entry is required.');
+ if(entry.reversedBy)throw new Error('This journal entry has already been reversed.');
+ const reversal={id:'REV-'+String(entry.id||Date.now()),date:date||new Date().toISOString().slice(0,10),memo:'Reversal: '+String(entry.memo||'')+' — '+String(reason||'Correction'),reversalOf:String(entry.id||''),createdAt:new Date().toISOString(),lines:entry.lines.map(l=>({account:String(l.account),debit:round(Number(l.credit||0)),credit:round(Number(l.debit||0))}))};
+ validateJournal(reversal);return reversal;
+}
+function validateJournalSet(entries){
+ const ids=new Set();
+ for(const e of entries||[]){if(!e.id||ids.has(String(e.id)))throw new Error('Journal entry IDs must be unique.');ids.add(String(e.id));validateJournal(e);}
+ for(const e of entries||[])if(e.reversalOf&&!ids.has(String(e.reversalOf)))throw new Error('A reversal must reference an existing journal entry.');
+ return true;
+}
+const api={ACCOUNTS,round,validateJournal,validateJournalSet,trialBalance,profitAndLoss,balanceSheet,cashMovement,summarize,reverseJournal};root.MTBusinessAccounting=api;if(typeof module!=='undefined'&&module.exports)module.exports=api;
 })(typeof window!=='undefined'?window:globalThis);
