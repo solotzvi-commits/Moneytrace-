@@ -111,7 +111,8 @@
     </section>
   </main>
 </div>
-<nav class="mobile-nav" id="mainMobileNav" style="display:none"><button class="active" data-view="overview">◫<small>סקירה</small></button><button data-view="transactions">↕<small>תנועות</small></button><button data-view="subscriptions">⟳<small>מנויים</small></button><button data-view="insights">✧<small>תובנות</small></button><button data-view="connect">⌁<small>בנק</small></button><button data-view="business">▣<small>עסק</small></button><button class="hidden" data-view="admin" data-admin-only>▥<small>נתונים</small></button></nav>
+<nav class="mobile-nav" id="mainMobileNav" style="display:none"><button class="active" data-view="overview">◫<small>סקירה</small></button><button data-view="transactions">↕<small>תנועות</small></button><button data-view="subscriptions">⟳<small>מנויים</small></button><button data-view="insights">✧<small>תובנות</small></button><button type="button" id="mobileMoreButton" aria-expanded="false">•••<small>עוד</small></button></nav>
+<div class="mobile-more-backdrop" id="mobileMoreBackdrop" hidden><section class="mobile-more-sheet" role="dialog" aria-modal="true" aria-label="ניווט נוסף"><div class="mobile-more-head"><b>עוד ב־MONEYTRACE</b><button type="button" id="mobileMoreClose" aria-label="סגירה">×</button></div><div id="mobileMoreLinks" class="mobile-more-links"></div></section></div>
 <div class="modal-backdrop hidden" id="modal"><div class="modal"><button class="modal-close" id="closeModal">×</button><h3>הוספת תנועה</h3><form id="transactionForm"><label>תיאור<input name="description" required placeholder="למשל: קניות בסופר"></label><div class="form-row"><label>סכום בש״ח<input name="amount" type="number" min="0.01" step="0.01" required></label><label>סוג<select name="type"><option value="expense">הוצאה</option><option value="income">הכנסה</option></select></label></div><div class="form-row"><label>קטגוריה<select name="category"><option>אוכל</option><option>תחבורה</option><option>בילויים</option><option>מנויים</option><option>קניות</option><option>חשבונות</option><option>בריאות</option><option>דיור</option><option>משכורת</option><option>אחר</option></select></label><label>תאריך<input name="date" type="date" required></label></div><button class="primary full" type="submit">שמירת תנועה</button></form></div></div>
 
 <div id="profileMenu" class="profile-menu hidden" role="menu"><div class="profile-menu-head"><b id="profileEmail">החשבון שלי</b><small>ניהול חשבון והעדפות</small></div><button type="button" data-profile-action="personal">👤 מעבר למצב אישי</button><button type="button" data-profile-action="business">▣ מעבר למצב עסקי</button><button type="button" data-profile-action="both">◫ הצגת שני המרחבים</button><button type="button" data-profile-action="settings">⚙ הגדרות האפליקציה</button><button type="button" data-profile-action="logout">↪ התנתקות</button></div>
@@ -131,4 +132,5 @@
 <script src="business-mode.js"></script><script src="profile-settings.js"></script>
 <script src="moneytrace-4.0-security.js"></script>
 <script src="moneytrace-security-center.js"></script>
+<script src="mobile-nav.js"></script>
 </body></html>
