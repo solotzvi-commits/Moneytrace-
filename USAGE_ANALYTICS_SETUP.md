@@ -3,7 +3,7 @@
 ## 1. Create the analytics table
 1. Open the Supabase project connected to MONEYTRACE.
 2. Go to **SQL Editor** and create a new query.
-3. Paste and run the complete contents of `usage-analytics.sql`.
+3. Paste and run the complete contents of `supabase/usage-analytics.sql`.
 4. Confirm that `public.app_usage_events` exists and RLS is enabled.
 
 ## 2. Grant the owner account admin access
