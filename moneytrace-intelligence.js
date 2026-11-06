@@ -6,7 +6,7 @@ const cash=n=>(window.moneyTraceFormatCurrency?window.moneyTraceFormatCurrency(n
 const userKey=()=>window.mtUser?.id||'local';
 const read=(key,fallback)=>{try{return JSON.parse(localStorage.getItem(key))??fallback}catch{return fallback}};
 const budgetKey=()=>window.mtUser?.id?'moneytrace_budgets_v1_user_'+userKey():'moneytrace_budgets_v1';
-function budgetsForMonth(){const all=read(budgetKey(),read('moneytrace_budgets_v1',{}));return all[new Date().toISOString().slice(0,7)]||{}}
+function budgetsForMonth(){const all=read(budgetKey(),{});return all[new Date().toISOString().slice(0,7)]||{}}
 function getTransactions(){try{return typeof transactions!=='undefined'&&Array.isArray(transactions)?transactions:[]}catch{return[]}}
 function style(){
  if($('#mtIntelligenceStyles'))return;
