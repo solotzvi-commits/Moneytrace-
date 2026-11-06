@@ -56,6 +56,7 @@ document.addEventListener('submit',e=>{if(e.target.matches('#budgetForm,#goalFor
 document.addEventListener('click',e=>{if(e.target.closest('.budgetDel,.goalDel,[data-biz-paid],[data-biz-stock],[data-biz-delete]'))setTimeout(()=>{renderPersonal();renderBusiness()},0)});
 window.addEventListener('mt:user-ready',render);
 const recent=$('#recentRows');if(recent)new MutationObserver(()=>renderPersonal()).observe(recent,{childList:true,subtree:true});
+const businessRoot=$('#businessRoot');if(businessRoot)new MutationObserver(()=>{if(!$('#mtBusinessIntelligence')&&businessRoot.querySelector('.business-page'))renderBusiness()}).observe(businessRoot,{childList:true,subtree:true});
 document.addEventListener('DOMContentLoaded',render);
 if(document.readyState!=='loading')render();
 window.MoneytraceIntelligence={refresh:render,exportReport};
