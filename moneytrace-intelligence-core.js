@@ -7,7 +7,7 @@
   'use strict';
   const DAY=86400000;
   const number=v=>Number.isFinite(Number(v))?Number(v):0;
-  const dateMs=v=>{const s=String(v||'');if(!/^\\d{4}-\\d{2}-\\d{2}$/.test(s))return NaN;return Date.parse(s+'T12:00:00Z')};
+  const dateMs=v=>{const s=String(v||'');if(!/^\d{4}-\d{2}-\d{2}$/.test(s))return NaN;return Date.parse(s+'T12:00:00Z')};
   const monthKey=d=>d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0');
   const median=values=>{const a=values.filter(Number.isFinite).sort((x,y)=>x-y);if(!a.length)return 0;const m=Math.floor(a.length/2);return a.length%2?a[m]:(a[m-1]+a[m])/2};
   function recurringItems(rows,now){
