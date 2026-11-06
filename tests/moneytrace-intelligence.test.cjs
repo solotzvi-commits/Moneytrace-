@@ -10,7 +10,7 @@ test('personal analysis calculates monthly totals, budgets and projections',()=>
 });
 test('empty personal history returns safe zero-state values',()=>{
  const a=analyzePersonal({transactions:[],budgets:{}},new Date('2026-11-01T12:00:00Z'));
- assert.equal(a.score,48);assert.equal(a.income,0);assert.equal(a.recurring.length,0);assert.equal(a.anomalies.length,0);
+ assert.equal(a.score,null);assert.equal(a.income,0);assert.equal(a.recurring.length,0);assert.equal(a.anomalies.length,0);
 });
 test('business analysis totals entries, unpaid invoices and low stock',()=>{
  const b=analyzeBusiness({entries:[{date:'2026-11-02',kind:'income',amount:1000},{date:'2026-11-03',kind:'expense',amount:400}],invoices:[{amount:250,status:'open'},{amount:100,status:'paid'}],products:[{name:'A',stock:2,reorder:3}]},{name:'Demo'},new Date('2026-11-15T12:00:00Z'));
