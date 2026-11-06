@@ -55,8 +55,8 @@
     const budgetPoints=Object.keys(budgets).length?Math.max(0,25-overBudget.length*8):12;
     const coveragePoints=coverage===null?8:Math.round(Math.min(1,coverage)*20);
     const consistencyPoints=anomalies.length?Math.max(0,20-anomalies.length*4):20;
-    const score=Math.max(0,Math.min(100,savingsPoints+budgetPoints+coveragePoints+consistencyPoints));
-    const label=score>=80?'מצב פיננסי יציב':score>=60?'בדרך הנכונה':score>=40?'יש מקום לשיפור':'כדאי לבדוק את התזרים';
+    const score=monthRows.length?Math.max(0,Math.min(100,savingsPoints+budgetPoints+coveragePoints+consistencyPoints)):null;
+    const label=score===null?'אין מספיק נתונים לחודש הנוכחי':score>=80?'מצב פיננסי יציב':score>=60?'בדרך הנכונה':score>=40?'יש מקום לשיפור':'כדאי לבדוק את התזרים';
     const actions=[];
     if(income===0)actions.push('הוסף הכנסות כדי לקבל תמונת תזרים מלאה.');
     if(overBudget.length)actions.push('בדוק את '+overBudget.length+' הקטגוריות שחרגו מהתקציב.');
