@@ -163,4 +163,4 @@ revoke all on function public.mt_create_business(text,char) from public;
 revoke all on function public.mt_post_journal_entry(uuid,date,text,jsonb,text,uuid) from public;
 grant execute on function public.mt_create_business(text,char) to authenticated;
 grant execute on function public.mt_post_journal_entry(uuid,date,text,jsonb,text,uuid) to authenticated;
-grant select on public.mt_businesses,public.mt_business_members,public.mt_accounts,public.mt_journal_entries,public.mt_journal_lines,public.mt_audit_events to authenticated;
+revoke insert,update,delete,truncate,references,trigger on public.mt_businesses,public.mt_business_members,public.mt_accounts,public.mt_journal_entries,public.mt_journal_lines,public.mt_audit_events from anon,authenticated;\ngrant select on public.mt_businesses,public.mt_business_members,public.mt_accounts,public.mt_journal_entries,public.mt_journal_lines,public.mt_audit_events to authenticated;
