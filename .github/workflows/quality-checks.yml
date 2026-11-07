@@ -52,3 +52,10 @@ jobs:
           if (business.includes('data-id="${x.id}"') || business.includes('data-biz-paid="${x.id}"')) throw new Error('Business record IDs must be escaped in HTML attributes');
           console.log('CSP and generated-HTML safety checks passed');
           NODE
+
+      - name: Install project tooling
+        run: npm install
+      - name: Type-check architecture contracts
+        run: npm run typecheck
+      - name: Build production web app
+        run: npm run build
