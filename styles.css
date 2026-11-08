@@ -427,3 +427,9 @@ body.mt-light .mobile-more-link{background:#f8fafc;border-color:#dce3ec;color:#2
  .main{padding-bottom:calc(86px + env(safe-area-inset-bottom))}
  .mobile-more-links{grid-template-columns:repeat(2,minmax(0,1fr))}
 }
+
+
+.mobile-nav-customizer{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin:12px 0}
+.mobile-nav-customizer label{display:grid;gap:6px;color:var(--muted);font-size:12px}
+.mobile-nav-customizer select{width:100%;min-width:0}
+@media(max-width:420px){.mobile-nav-customizer{grid-template-columns:1fr}}
