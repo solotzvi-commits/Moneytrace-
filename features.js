@@ -165,10 +165,6 @@ renderBudgets();renderGoals();
   if (mainNav && !document.querySelector('[data-view="assistant"]')) {
     const b = document.createElement('button'); b.className='nav-item'; b.dataset.view='assistant'; b.innerHTML='<span>✧</span> עוזר AI'; mainNav.appendChild(b);
   }
-  const mobileNav = document.querySelector('.mobile-nav');
-  if (mobileNav && !document.querySelector('.mobile-nav [data-view="assistant"]')) {
-    const b=document.createElement('button'); b.dataset.view='assistant'; b.innerHTML='✧<small>AI</small>'; mobileNav.appendChild(b);
-  }
   if (!$('#view-assistant')) {
     const section=document.createElement('section'); section.id='view-assistant'; section.className='view';
     section.innerHTML=`
