@@ -23,14 +23,15 @@ async function loadGroup(name){
 }
 window.mtLoadFeature=loadGroup;
 let pending=new WeakSet();
+const readyGroups=new Set();
 document.addEventListener('click',event=>{
  const target=event.target instanceof Element?event.target.closest('[data-view]'):null;
  if(!target)return;
  const view=target.dataset.view;
- if(!groups[view]||loaded.has(groups[view][0])||pending.has(target))return;
+ if(!groups[view]||readyGroups.has(view)||pending.has(target))return;
  event.preventDefault();event.stopImmediatePropagation();pending.add(target);
  target.setAttribute('aria-busy','true');
- loadGroup(view).then(()=>{pending.delete(target);target.removeAttribute('aria-busy');target.click()})
+ loadGroup(view).then(()=>{readyGroups.add(view);pending.delete(target);target.removeAttribute('aria-busy');target.click()})
  .catch(error=>{pending.delete(target);target.removeAttribute('aria-busy');console.error('MONEYTRACE feature load failed',error);window.showToast?.('לא ניתן לטעון את האזור כרגע. בדוק חיבור ונסה שוב.')});
 },true);
 window.mtLoadPdf=async()=>{
