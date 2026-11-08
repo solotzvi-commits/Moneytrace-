@@ -22,6 +22,8 @@
       <button id="gateLogin" type="submit" style="border:0;border-radius:12px;padding:14px;background:#21a879;color:#061a13;font:inherit;font-weight:800">התחברות</button>
       <button id="gateSignup" type="button" style="border:1px solid #40536d;border-radius:12px;padding:13px;background:transparent;color:#e7eef8;font:inherit;font-weight:700">יצירת חשבון חדש</button>
     </form>
+    <div style="display:flex;align-items:center;gap:12px;margin:16px 0;color:#8191a8;font-size:12px"><span style="height:1px;background:#34445b;flex:1"></span>או</div>
+    <button id="gateGoogle" type="button" style="width:100%;border:1px solid #40536d;border-radius:12px;padding:13px;background:#fff;color:#202124;font:inherit;font-weight:700;display:flex;align-items:center;justify-content:center;gap:10px"><span aria-hidden="true">G</span> המשך עם Google</button>
     <p id="gateStatus" role="status" aria-live="polite" style="min-height:24px;color:#aab8cb;line-height:1.5;margin:16px 0 0;text-align:center">נדרשת התחברות כדי להמשיך.</p>
     <p style="font-size:12px;color:#8191a8;text-align:center;margin:14px 0 0">הנתונים הפיננסיים שלך זמינים רק לאחר התחברות לחשבון.</p>
   </div>
@@ -119,20 +121,10 @@
 <div id="workspaceChooser" class="workspace-overlay hidden"><section class="workspace-card"><span class="workspace-mark">M</span><h2>איך תרצה להשתמש ב־MONEYTRACE?</h2><p>אפשר לשנות את הבחירה בכל רגע דרך כפתור הפרופיל.</p><div class="workspace-options"><button data-workspace="personal"><b>👤 מצב אישי</b><small>הוצאות, הכנסות, תקציב וחיסכון</small></button><button data-workspace="business"><b>▣ מצב עסקי</b><small>לקוחות, ספקים, מלאי, גבייה ורווחיות</small></button><button data-workspace="both"><b>◫ שניהם</b><small>גישה למרחב האישי והעסקי</small></button></div><p class="workspace-note">הנתונים האישיים והעסקיים נשמרים בנפרד. נתוני העסק נשמרים כרגע במכשיר זה.</p></section></div>
 <div id="settingsOverlay" class="workspace-overlay hidden"><section class="workspace-card settings-card"><button class="modal-close" id="settingsClose">×</button><h2>הגדרות האפליקציה</h2><label>ערכת נושא<select id="settingTheme"><option value="dark">כהה</option><option value="light">בהירה</option></select></label><label>מטבע תצוגה<select id="settingCurrency"><option value="ILS">שקל ישראלי (₪)</option><option value="USD">דולר ($)</option><option value="EUR">אירו (€)</option><option value="GBP">ליש״ט (£)</option></select><small id="fxStatus" class="workspace-note">שערי המרה מתעדכנים אוטומטית.</small></label><label>גודל טקסט<select id="settingFont"><option value="normal">רגיל</option><option value="large">גדול</option></select></label><div class="settings-actions"><button class="primary" id="settingsSave">שמירת הגדרות</button><button class="secondary" id="settingsExport">ייצוא תנועות אישיות</button></div><p class="workspace-note">ההגדרות נשמרות במכשיר. סכומי המקור נשמרים בשקלים ומוצגים במטבע שבחרת לפי שער ייחוס יומי. זה אינו שער בנק או שער עסקה מובטח.</p></section></div>
 <div class="toast" id="toast" role="status"></div>
-<script src="https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/build/pdf.min.js"></script>
-<script src="pdfjs-config.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="supabase-config.js"></script>
 <script src="app.js"></script>
-<script src="usage-analytics.js"></script>
-<script src="features.js"></script>
-<script src="moneytrace-six-features.js"></script>
-<script src="smart-subscriptions.js"></script>
-<script src="coach-2.2.js"></script>
-<script src="business-accounting-core.js"></script>
-<script src="business-mode.js"></script>
-<script src="moneytrace-intelligence-core.js"></script>
-<script src="moneytrace-intelligence.js"></script>
+<script src="feature-loader.js"></script>
 <script src="profile-settings.js"></script>
 <script src="moneytrace-4.0-security.js"></script>
 <script src="moneytrace-security-center.js"></script>
