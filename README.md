@@ -53,5 +53,5 @@ See [the architecture map](docs/ARCHITECTURE.md) for module ownership and reposi
 - The initial page loads the transaction workspace and authentication runtime only.
 - PDF.js is fetched only when a user selects a PDF statement.
 - Insights, subscriptions, assistant, business accounting, and admin analytics are loaded on first navigation to their respective areas.
-- Google OAuth uses Supabase Auth. Before enabling it in production, enable the Google provider in the Supabase dashboard, add the Google OAuth client ID/secret there, and allow the production callback URL in both Google Cloud and Supabase Auth URL configuration.
+- Google OAuth uses Supabase Auth. Before enabling it in production, enable the Google provider in the Supabase dashboard, add the Google OAuth client ID/secret there, set Google Cloud's authorized redirect URI to `https://kkbbrqatyefevqbccxqp.supabase.co/auth/v1/callback`, and allow `https://solotzvi-commits.github.io/Moneytrace-/` in Supabase Auth's redirect URL allowlist.
 - Email signup errors now distinguish invalid addresses and Supabase rate limits. The client does not bypass or weaken server-side rate limits.
