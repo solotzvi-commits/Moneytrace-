@@ -16,7 +16,7 @@ const css=document.createElement('style');css.textContent=`
 .edit-row{border:0;background:transparent;color:#8ba7ff;font:600 12px 'Heebo',sans-serif;cursor:pointer;padding:4px}
 @media(max-width:700px){.feature-form{grid-template-columns:1fr}.mobile-nav button{min-width:0;flex:1}.mobile-nav button small{font-size:9px}}
 `;document.head.appendChild(css);
-function nav(view,icon,label){document.querySelectorAll('.sidebar nav,.mobile-nav').forEach(n=>{const b=document.createElement('button');b.className=n.classList.contains('mobile-nav')?'':'nav-item';b.dataset.view=view;b.innerHTML=n.classList.contains('mobile-nav')?`${icon}<small>${label}</small>`:`<span>${icon}</span> ${label}`;b.onclick=()=>open(view);n.appendChild(b)})}
+function nav(view,icon,label){const n=document.querySelector('.sidebar nav');if(!n)return;const b=document.createElement('button');b.className='nav-item';b.dataset.view=view;b.innerHTML=`<span>${icon}</span> ${label}`;b.onclick=()=>open(view);n.appendChild(b)}
 function view(id,title,sub,html){const s=document.createElement('section');s.id='view-'+id;s.className='view';s.innerHTML=`<div class="section-intro"><div><h2>${title}</h2><p>${sub}</p></div></div>${html}`;$('.main').appendChild(s)}
 function open(v){document.querySelectorAll('.view').forEach(x=>x.classList.toggle('active',x.id==='view-'+v));document.querySelectorAll('[data-view]').forEach(x=>x.classList.toggle('active',x.dataset.view===v));$('#pageTitle').textContent=v==='budgets'?'תקציבים חודשיים':'יעדי חיסכון';v==='budgets'?renderBudgets():renderGoals()}
 nav('budgets','₪','תקציב');nav('goals','◎','יעדים');
