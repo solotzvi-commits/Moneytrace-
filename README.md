@@ -46,3 +46,12 @@ python3 -m http.server 8080
 ## בדיקות אוטומטיות
 
 GitHub Actions מריץ בדיקות תחביר JavaScript, תקינות קובצי JSON, מדיניות CSP ובדיקות בסיסיות למניעת הזרקת מזהים לתוך HTML. CodeQL מריץ סריקת אבטחה סטטית.
+
+
+## Loading and authentication architecture
+
+- The initial page loads the transaction workspace and authentication runtime only.
+- PDF.js is fetched only when a user selects a PDF statement.
+- Insights, subscriptions, assistant, business accounting, and admin analytics are loaded on first navigation to their respective areas.
+- Google OAuth uses Supabase Auth. Before enabling it in production, enable the Google provider in the Supabase dashboard, add the Google OAuth client ID/secret there, and allow the production callback URL in both Google Cloud and Supabase Auth URL configuration.
+- Email signup errors now distinguish invalid addresses and Supabase rate limits. The client does not bypass or weaken server-side rate limits.
