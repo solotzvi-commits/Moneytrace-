@@ -129,7 +129,9 @@ $('#backupInput').addEventListener('change',async e=>{
  function showApp(){gate.style.display='none';mainApp.style.display='';mobileNav.style.display=''}
  showGate('בודק התחברות…');
  if(!window.supabase||!window.MONEYTRACE_SUPABASE_URL||!window.MONEYTRACE_SUPABASE_PUBLISHABLE_KEY){status.textContent='שירות הענן לא נטען. בדוק חיבור לאינטרנט.';showGate('לא ניתן לטעון את שירות ההתחברות. בדוק אינטרנט ורענן את הדף.');return}
- const client=window.supabase.createClient(window.MONEYTRACE_SUPABASE_URL,window.MONEYTRACE_SUPABASE_PUBLISHABLE_KEY);
+ const client=window.supabase.createClient(window.MONEYTRACE_SUPABASE_URL,window.MONEYTRACE_SUPABASE_PUBLISHABLE_KEY,{
+  auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:true}
+ });
  window.mtSupabase=client;window.mtUser=null;window.mtCloudSyncEnabled=false;
  const logout=$('#authLogout'),submit=$('#authSubmit'),signup=$('#authSignup');
  let pollHandle=null, syncing=false, syncPending=false;
@@ -194,10 +196,38 @@ $('#backupInput').addEventListener('change',async e=>{
   try{const {error}=await client.auth.signInWithOAuth({provider:'google',options:{redirectTo:'https://solotzvi-commits.github.io/Moneytrace-/'}});if(error)throw error}
   catch(err){gateStatus.textContent=authMessage(err,'login');googleButton.disabled=false}
  });
- gateSignup.addEventListener('click',async()=>{if(!gateEmail.value.trim()||gatePassword.value.length<8){gateStatus.textContent='הזן אימייל וסיסמה של לפחות 8 תווים.';return}const btn=$('#gateSignup');btn.disabled=true;gateStatus.textContent='יוצר חשבון…';try{const {data,error}=await client.auth.signUp({email:gateEmail.value.trim(),password:gatePassword.value,options:{emailRedirectTo:'https://solotzvi-commits.github.io/Moneytrace-/'}});if(error)throw error;if(data.session&&data.user)await loadCloud(data.user);else gateStatus.textContent='נשלח אליך אימייל לאימות. אשר אותו ואז חזור לכאן והתחבר.'}catch(err){gateStatus.textContent='שגיאת הרשמה: '+err.message}finally{btn.disabled=false}});
  form.addEventListener('submit',async e=>{e.preventDefault();submit.disabled=true;try{const {data,error}=await client.auth.signInWithPassword({email:email.value.trim(),password:password.value});if(error)throw error;if(data.user)await loadCloud(data.user)}catch(err){status.textContent='שגיאת התחברות: '+err.message}finally{submit.disabled=false}});
  signup.addEventListener('click',async()=>{if(!email.value.trim()||password.value.length<8){status.textContent='הזן אימייל וסיסמה של לפחות 8 תווים.';return}signup.disabled=true;try{const {data,error}=await client.auth.signUp({email:email.value.trim(),password:password.value,options:{emailRedirectTo:'https://solotzvi-commits.github.io/Moneytrace-/'}});if(error)throw error;if(data.session&&data.user)await loadCloud(data.user);else status.textContent='נשלח אליך אימייל לאימות. פתח אותו ואז חזור לאתר והתחבר.'}catch(err){status.textContent='שגיאת הרשמה: '+err.message}finally{signup.disabled=false}});
  logout.addEventListener('click',async()=>{window.mtCloudSyncEnabled=false;if(pollHandle)clearInterval(pollHandle);const {error}=await client.auth.signOut();if(error){status.textContent='שגיאה בהתנתקות: '+error.message;return}setSignedIn(null);showToast('התנתקת מהחשבון')});
- client.auth.onAuthStateChange((event,session)=>{if(event==='SIGNED_IN'&&session?.user&&window.mtUser?.id!==session.user.id)loadCloud(session.user);if(event==='SIGNED_OUT'){window.mtCloudSyncEnabled=false;if(pollHandle)clearInterval(pollHandle);setSignedIn(null)}});
- client.auth.getSession().then(async({data,error})=>{if(error){status.textContent='לא ניתן לבדוק התחברות: '+error.message;setSignedIn(null);return}if(data.session?.user){if(new URLSearchParams(location.search).has('reset-password')){await loadCloud(data.session.user);window.dispatchEvent(new Event('mt:password-recovery'));return}const {error:lockError}=await client.auth.signOut({scope:'local'});if(lockError){status.textContent='לא ניתן לנעול את ההפעלה הקודמת: '+lockError.message;showGate('לא ניתן לאמת מחדש את ההתחברות. נסה לרענן את הדף.');return}setSignedIn(null);gateStatus.textContent='למען אבטחת החשבון, יש להתחבר מחדש בכל פתיחה.'}else setSignedIn(null)});
+ client.auth.onAuthStateChange((event,session)=>{
+  // Defer follow-up Supabase requests until the auth callback has released its internal lock.
+  if(event==='SIGNED_IN'&&session?.user&&window.mtUser?.id!==session.user.id){
+   setTimeout(()=>loadCloud(session.user),0);
+  }
+  if(event==='SIGNED_OUT'){
+   window.mtCloudSyncEnabled=false;
+   if(pollHandle)clearInterval(pollHandle);
+   window.mtUser=null;
+   setSignedIn(null);
+  }
+ });
+ client.auth.getSession().then(async({data,error})=>{
+  if(error){
+   status.textContent='לא ניתן לבדוק התחברות: '+error.message;
+   setSignedIn(null);
+   return;
+  }
+  if(data.session?.user){
+   if(new URLSearchParams(location.search).has('reset-password')){
+    await loadCloud(data.session.user);
+    window.dispatchEvent(new Event('mt:password-recovery'));
+    return;
+   }
+   // Restore the existing Supabase session on this device. Tokens are persisted and
+   // refreshed by supabase-js; only an explicit sign-out ends the session.
+   await loadCloud(data.session.user);
+  }else{
+   setSignedIn(null);
+  }
+ });
 })();
