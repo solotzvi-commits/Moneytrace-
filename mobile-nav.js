@@ -74,5 +74,7 @@
   const observer=new MutationObserver(()=>{renderBar()});
   observer.observe(document.querySelector('.sidebar nav')||document.body,{childList:true,subtree:true,attributes:true,attributeFilter:['class','hidden']});
   window.addEventListener('mt:user-ready',()=>{read();renderBar();populateCustomizer()});
+  const sidebarObserver=new MutationObserver(()=>{renderBar();populateCustomizer()});
+  sidebarObserver.observe(document.querySelector('.sidebar nav')||document.body,{childList:true,subtree:true,attributes:true,attributeFilter:['class','hidden']});
   read();renderBar();populateCustomizer();
 })();
