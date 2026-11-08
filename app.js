@@ -54,7 +54,7 @@ function guessCategory(s){const x=s.toLowerCase();if(/netflix|spotify|disney|app
 $('#pdfInput')?.addEventListener('change',async e=>{
  const file=e.target.files[0];if(!file)return;
  try{
-  if(!window.pdfjsLib)throw new Error('רכיב קריאת PDF לא נטען. רענן את האפליקציה ונסה שוב.');
+  if(!window.pdfjsLib){if(!window.mtLoadPdf)throw new Error('רכיב קריאת PDF אינו זמין.');await window.mtLoadPdf();}
   const pdf=await pdfjsLib.getDocument({data:new Uint8Array(await file.arrayBuffer())}).promise;let lines=[];
   for(let p=1;p<=pdf.numPages;p++){
    const page=await pdf.getPage(p),content=await page.getTextContent();
@@ -173,7 +173,27 @@ $('#backupInput').addEventListener('change',async e=>{
   }catch(e){window.mtCloudSyncEnabled=false;status.textContent='התחברת, אך טעינת הענן נכשלה: '+e.message;showGate('ההתחברות הצליחה, אך טעינת הנתונים נכשלה: '+e.message);}
   finally{window.mtLoadingUser=null;}
  }
- gateForm.addEventListener('submit',async e=>{e.preventDefault();const btn=$('#gateLogin');btn.disabled=true;gateStatus.textContent='מתחבר…';try{const {data,error}=await client.auth.signInWithPassword({email:gateEmail.value.trim(),password:gatePassword.value});if(error)throw error;if(data.user)await loadCloud(data.user)}catch(err){gateStatus.textContent='שגיאת התחברות: '+err.message}finally{btn.disabled=false}});
+ function validGateEmail(){
+  gateEmail.value=gateEmail.value.trim();
+  if(!gateEmail.value||!gateEmail.checkValidity()){gateEmail.reportValidity();gateStatus.textContent='הזן כתובת אימייל תקינה, למשל name@example.com.';return false}
+  return true;
+ }
+ function authMessage(error,action){
+  const message=String(error?.message||'');
+  if(/rate.?limit|too many requests|email rate limit/i.test(message))return 'נשלחו יותר מדי בקשות בזמן קצר. המתן כמה דקות לפני ניסיון נוסף, או השתמש בהתחברות עם Google.';
+  if(/invalid email|email address is invalid/i.test(message))return 'כתובת האימייל לא התקבלה. בדוק שאין רווחים ושיש כתובת מלאה כמו name@example.com.';
+  if(/already registered|user already registered/i.test(message))return 'כבר קיים חשבון עם האימייל הזה. נסה להתחבר במקום להירשם.';
+  if(/provider is not enabled|unsupported provider/i.test(message))return 'Google sign-in עדיין לא הופעל בפרויקט Supabase. נדרשת הפעלת Google Provider והגדרת OAuth credentials.';
+  return (action==='signup'?'ההרשמה נכשלה: ':'ההתחברות נכשלה: ')+message;
+ }
+ gateForm.addEventListener('submit',async e=>{e.preventDefault();if(!validGateEmail())return;const btn=$('#gateLogin');btn.disabled=true;gateStatus.textContent='מתחבר…';try{const {data,error}=await client.auth.signInWithPassword({email:gateEmail.value,password:gatePassword.value});if(error)throw error;if(data.user)await loadCloud(data.user)}catch(err){gateStatus.textContent=authMessage(err,'login')}finally{btn.disabled=false}});
+ gateSignup.addEventListener('click',async()=>{if(!validGateEmail())return;if(gatePassword.value.length<8){gatePassword.setCustomValidity('הסיסמה חייבת לכלול לפחות 8 תווים.');gatePassword.reportValidity();gatePassword.setCustomValidity('');gateStatus.textContent='הזן סיסמה של לפחות 8 תווים.';return}const btn=$('#gateSignup');btn.disabled=true;gateStatus.textContent='יוצר חשבון…';try{const {data,error}=await client.auth.signUp({email:gateEmail.value,password:gatePassword.value,options:{emailRedirectTo:'https://solotzvi-commits.github.io/Moneytrace-/'}});if(error)throw error;if(data.session&&data.user)await loadCloud(data.user);else gateStatus.textContent='נשלח אימייל אימות אם ניתן ליצור חשבון. בדוק את תיבת הדואר לפני ניסיון נוסף.'}catch(err){gateStatus.textContent=authMessage(err,'signup')}finally{btn.disabled=false}});
+ const googleButton=$('#gateGoogle');
+ googleButton?.addEventListener('click',async()=>{
+  googleButton.disabled=true;gateStatus.textContent='מעביר להתחברות עם Google…';
+  try{const {error}=await client.auth.signInWithOAuth({provider:'google',options:{redirectTo:'https://solotzvi-commits.github.io/Moneytrace-/'}});if(error)throw error}
+  catch(err){gateStatus.textContent=authMessage(err,'login');googleButton.disabled=false}
+ });
  gateSignup.addEventListener('click',async()=>{if(!gateEmail.value.trim()||gatePassword.value.length<8){gateStatus.textContent='הזן אימייל וסיסמה של לפחות 8 תווים.';return}const btn=$('#gateSignup');btn.disabled=true;gateStatus.textContent='יוצר חשבון…';try{const {data,error}=await client.auth.signUp({email:gateEmail.value.trim(),password:gatePassword.value,options:{emailRedirectTo:'https://solotzvi-commits.github.io/Moneytrace-/'}});if(error)throw error;if(data.session&&data.user)await loadCloud(data.user);else gateStatus.textContent='נשלח אליך אימייל לאימות. אשר אותו ואז חזור לכאן והתחבר.'}catch(err){gateStatus.textContent='שגיאת הרשמה: '+err.message}finally{btn.disabled=false}});
  form.addEventListener('submit',async e=>{e.preventDefault();submit.disabled=true;try{const {data,error}=await client.auth.signInWithPassword({email:email.value.trim(),password:password.value});if(error)throw error;if(data.user)await loadCloud(data.user)}catch(err){status.textContent='שגיאת התחברות: '+err.message}finally{submit.disabled=false}});
  signup.addEventListener('click',async()=>{if(!email.value.trim()||password.value.length<8){status.textContent='הזן אימייל וסיסמה של לפחות 8 תווים.';return}signup.disabled=true;try{const {data,error}=await client.auth.signUp({email:email.value.trim(),password:password.value,options:{emailRedirectTo:'https://solotzvi-commits.github.io/Moneytrace-/'}});if(error)throw error;if(data.session&&data.user)await loadCloud(data.user);else status.textContent='נשלח אליך אימייל לאימות. פתח אותו ואז חזור לאתר והתחבר.'}catch(err){status.textContent='שגיאת הרשמה: '+err.message}finally{signup.disabled=false}});
