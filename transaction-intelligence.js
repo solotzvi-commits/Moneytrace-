@@ -14,7 +14,7 @@ const RULES = [
 const text = value => String(value == null ? '' : value).normalize('NFKC').trim().toLocaleLowerCase();
 const validDate = value => {
   const s = String(value || '');
-  if (!/^\\d{4}-\\d{2}-\\d{2}$/.test(s)) return false;
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(s)) return false;
   const d = new Date(s + 'T00:00:00.000Z');
   return !Number.isNaN(d.valueOf()) && d.toISOString().slice(0, 10) === s;
 };
