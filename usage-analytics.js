@@ -56,6 +56,8 @@ function onReady(){
  if(Date.now()-last>DAY){localStorage.setItem(key,String(Date.now()));record('app_open')}
 }
 window.addEventListener('mt:user-ready',onReady);
+// The module can be lazy-loaded after the auth event has already fired.
+onReady();
 document.addEventListener('click',e=>{
  const nav=e.target.closest('[data-view]');
  if(nav?.dataset.view&&nav.dataset.view!=='admin'){

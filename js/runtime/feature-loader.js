@@ -22,6 +22,10 @@ async function loadGroup(name){
  for(const path of paths)await loadScript(path);
 }
 window.mtLoadFeature=loadGroup;
+// Admin analytics must initialize after authentication even though its menu item is hidden until authorization is known.
+function initializeAdminAnalytics(){loadGroup('admin').catch(error=>console.error('MONEYTRACE admin analytics failed to load',error));}
+window.addEventListener('mt:user-ready',initializeAdminAnalytics);
+if(window.mtUser?.id)initializeAdminAnalytics();
 let pending=new WeakSet();
 const readyGroups=new Set();
 document.addEventListener('click',event=>{
