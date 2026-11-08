@@ -48,7 +48,7 @@ python3 -m http.server 8080
 GitHub Actions מריץ בדיקות תחביר JavaScript, תקינות קובצי JSON, מדיניות CSP ובדיקות בסיסיות למניעת הזרקת מזהים לתוך HTML. CodeQL מריץ סריקת אבטחה סטטית.
 
 
-## Loading and authentication architecture
+See [the architecture map](docs/ARCHITECTURE.md) for module ownership and repository organization.\n\n## Loading and authentication architecture
 
 - The initial page loads the transaction workspace and authentication runtime only.
 - PDF.js is fetched only when a user selects a PDF statement.
