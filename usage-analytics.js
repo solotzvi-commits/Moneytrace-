@@ -9,7 +9,14 @@ function localKey(id){return 'moneytrace_analytics_open_'+id}
 function isAdmin(u){return u?.app_metadata?.role==='admin'}
 function setAdminVisibility(u){
  const allowed=isAdmin(u);
- document.querySelectorAll('[data-admin-only]').forEach(el=>el.classList.toggle('hidden',!allowed));
+ document.querySelectorAll('[data-admin-only]').forEach(el=>{
+  el.classList.toggle('hidden',!allowed);
+  if(allowed){el.removeAttribute('hidden');el.removeAttribute('aria-hidden');el.removeAttribute('tabindex')}
+  else{el.setAttribute('hidden','');el.setAttribute('aria-hidden','true');el.setAttribute('tabindex','-1')}
+ });
+ const view=document.querySelector('#view-admin');
+ if(view&&!allowed){view.classList.remove('active');view.setAttribute('aria-hidden','true')}
+ else if(view){view.removeAttribute('aria-hidden')}
 }
 async function record(name,feature=null){
  if(!ready||!client||!user?.id||!ALLOWED.has(name))return;
@@ -59,6 +66,13 @@ window.addEventListener('mt:user-ready',onReady);
 // The module can be lazy-loaded after the auth event has already fired.
 onReady();
 document.addEventListener('click',e=>{
+ const adminNav=e.target.closest('[data-view="admin"]');
+ if(adminNav&&!isAdmin(user)){
+  e.preventDefault();e.stopImmediatePropagation();
+  setAdminVisibility(user);
+  const overview=document.querySelector('[data-view="overview"]');overview?.click();
+  return;
+ }
  const nav=e.target.closest('[data-view]');
  if(nav?.dataset.view&&nav.dataset.view!=='admin'){
   const label=nav.dataset.view;
