@@ -23,7 +23,7 @@ jobs:
       - name: Check JavaScript syntax
         run: |
           set -euo pipefail
-          for file in *.js; do
+          find . -path './.git' -prune -o -name '*.js' -type f -print0 | while IFS= read -r -d '' file; do
             echo "Checking $file"
             node --check "$file"
           done
