@@ -2,10 +2,10 @@
 (()=>{'use strict';
 const loaded=new Map();
 const groups={
- insights:['features.js','moneytrace-six-features.js','moneytrace-intelligence-core.js','moneytrace-intelligence.js'],
+ insights:['moneytrace-six-features.js','moneytrace-intelligence-core.js','moneytrace-intelligence.js'],
  subscriptions:['smart-subscriptions.js'],
  business:['business-accounting-core.js','business-mode.js','moneytrace-intelligence-core.js','moneytrace-intelligence.js'],
- assistant:['features.js','coach-2.2.js'],
+ assistant:['coach-2.2.js'],
  admin:['usage-analytics.js']
 };
 function loadScript(path){
