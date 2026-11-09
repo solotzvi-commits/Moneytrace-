@@ -24,7 +24,7 @@ view('budgets','תקציבים חודשיים','הגדר מסגרת לכל קט�
 `<div id="budgetAlerts"></div><article class="feature-card"><h3>הגדרת תקציב</h3><form id="budgetForm" class="feature-form">
 <label>קטגוריה<select name="category">${['אוכל','תחבורה','בילויים','מנויים','קניות','חשבונות','בריאות','דיור','אחר'].map(x=>`<option>${x}</option>`).join('')}</select></label>
 <label>תקציב חודשי (₪)<input name="amount" type="number" min="1" required placeholder="1500"></label><button class="primary">שמירת תקציב</button></form></article><div id="budgetList"></div>`);
-view('savings','יעדי חיסכון','קבע יעד, עקוב אחרי ההתקדמות וראה כמה עוד נשאר.',
+$('#view-savings').insertAdjacentHTML('beforeend',
 `<article class="feature-card"><h3>יצירת יעד חדש</h3><form id="goalForm" class="feature-form">
 <label>שם היעד<input name="name" required maxlength="50" placeholder="למשל חופשה"></label>
 <label>סכום יעד (₪)<input name="target" type="number" min="1" required></label>
