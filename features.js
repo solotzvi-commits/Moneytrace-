@@ -49,6 +49,11 @@ const tf=$('#transactionForm');tf.addEventListener('submit',e=>{if(editing===nul
 $('#closeModal').addEventListener('click',()=>{editing=null;$('#modal h3').textContent='הוספת תנועה';tf.querySelector('[type=submit]').textContent='שמירת תנועה'});
 $('#modal').addEventListener('click',e=>{if(e.target.id==='modal'&&editing!==null){editing=null;$('#modal h3').textContent='הוספת תנועה';tf.querySelector('[type=submit]').textContent='שמירת תנועה'}});
 const oldRender=window.render;if(typeof oldRender==='function')window.render=function(){oldRender();renderBudgets()};
+window.addEventListener('mt:financial-settings-loaded',e=>{
+ if(e.detail?.userId&&e.detail.userId!==window.mtUser?.id)return;
+ budgets=read('moneytrace_budgets_v1',{});goals=read('moneytrace_goals_v1',[]);
+ renderBudgets();renderGoals();
+});
 renderBudgets();renderGoals();
 })();
 /* SMART SAVINGS: weekly estimated savings, savings destinations and personalized ideas. */
@@ -120,6 +125,13 @@ renderBudgets();renderGoals();
     const view=$('#view-savings');if(!view)return;let card=$('#smartPoolCard');if(!card){card=document.createElement('article');card.id='smartPoolCard';card.className='feature-card';view.insertBefore(card,view.children[1]||null);}card.innerHTML=`<h3>קופת חיסכון כללית</h3><div style="font-size:26px;font-weight:800;color:#55d6a5">${cash(pool)}</div><p style="color:#aab7ca;font-size:11px">אומדן חיסכון שנוסף אוטומטית בעקבות ירידה בהוצאות שנרשמו.</p>`;
   };
   const init=()=>{processWeek();renderPanel();renderPool();};
+  window.addEventListener('mt:financial-settings-loaded',e=>{
+    if(e.detail?.userId&&e.detail.userId!==window.mtUser?.id)return;
+    goals=read('moneytrace_goals_v1',[]);
+    pool=Number(localStorage.getItem(poolKey)||0);
+    ledger=read(ledgerKey,[]);
+    renderPanel();renderPool();
+  });
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',init);else init();
 })();
 /* MONEYTRACE AI ASSISTANT — private, on-device financial insights MVP.

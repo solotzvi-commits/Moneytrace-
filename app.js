@@ -18,7 +18,7 @@ const demo=[
 function isoDaysAgo(n){const d=new Date();d.setDate(d.getDate()-n);return d.toISOString().slice(0,10)}
 let transactions=load();let isDemo=!localStorage.getItem(KEY);
 function load(){try{const x=localStorage.getItem(KEY);return x?JSON.parse(x):demo.map(t=>({...t}))}catch{return demo.map(t=>({...t}))}}
-function save(){localStorage.setItem(KEY,JSON.stringify(transactions));isDemo=false;$('#dataMode').textContent='הנתונים שלך';if(window.mtUser&&window.mtCloudSyncEnabled)syncAll().catch(()=>showToast('נשמר במכשיר; סנכרון הענן נכשל'))}
+function save(){localStorage.setItem(KEY,JSON.stringify(transactions));window.mtLocalTransactionsChangedAt=Date.now();isDemo=false;$('#dataMode').textContent='הנתונים שלך';if(window.mtUser&&window.mtCloudSyncEnabled)syncAll().catch(()=>showToast('נשמר במכשיר; סנכרון הענן נכשל'))}
 const $=s=>document.querySelector(s);const money=n=>(window.moneyTraceFormatCurrency?window.moneyTraceFormatCurrency(n):'₪'+Number(n||0).toLocaleString('he-IL',{minimumFractionDigits:2,maximumFractionDigits:2}));
 const cats=['אוכל','תחבורה','בילויים','מנויים','קניות','חשבונות','בריאות','דיור','משכורת','אחר'];
 function esc(s){return String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
@@ -93,7 +93,8 @@ render();calcSaving();
 
 // Full local backup and restore. No data is uploaded to a server.
 $('#backupJson').addEventListener('click',()=>{
- const payload={app:'MONEYTRACE',version:2,createdAt:new Date().toISOString(),transactions,preferences:{budgets:localStorage.getItem('moneytrace_budgets_v1'),goals:localStorage.getItem('moneytrace_goals_v1'),monthlyLimit:localStorage.getItem('mt_month_limit'),bankBalance:localStorage.getItem('mt_bank_balance'),challengeGoal:localStorage.getItem('mt_challenge_goal')}};
+ const preferenceKeys=['moneytrace_budgets_v1','moneytrace_goals_v1','moneytrace_savings_pool_v1','moneytrace_savings_ledger_v1','moneytrace_savings_destination_v1','moneytrace_last_processed_week_v1','mt_month_limit','mt_bank_balance','mt_challenge_goal'];
+ const payload={app:'MONEYTRACE',version:3,createdAt:new Date().toISOString(),transactions,preferences:Object.fromEntries(preferenceKeys.map(key=>[key,localStorage.getItem(key)]))};
  const blob=new Blob([JSON.stringify(payload,null,2)],{type:'application/json'});
  const url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;a.download='moneytrace-backup-'+new Date().toISOString().slice(0,10)+'.json';a.click();
  setTimeout(()=>URL.revokeObjectURL(url),1000);showToast('קובץ הגיבוי הורד למכשיר');
@@ -113,9 +114,18 @@ $('#backupInput').addEventListener('change',async e=>{
   const preferences=data.preferences||{},safePrefs={};
   if(preferences.budgets){const budgets=JSON.parse(preferences.budgets);if(!budgets||typeof budgets!=='object'||Array.isArray(budgets))throw new Error('מבנה התקציבים בגיבוי אינו תקין');for(const [m,catsMap] of Object.entries(budgets)){if(!/^\d{4}-\d{2}$/.test(m)||!catsMap||typeof catsMap!=='object'||Array.isArray(catsMap))throw new Error('מבנה התקציב בגיבוי אינו תקין');for(const [cat,value] of Object.entries(catsMap)){if(!cats.includes(cat)||!Number.isFinite(Number(value))||Number(value)<=0||Number(value)>100000000)throw new Error('נמצא תקציב לא תקין בגיבוי')}}safePrefs.budgets=JSON.stringify(budgets)}
   if(preferences.goals){const goals=JSON.parse(preferences.goals);if(!Array.isArray(goals)||goals.length>100)throw new Error('מבנה יעדי החיסכון בגיבוי אינו תקין');const clean=goals.map(g=>{const name=String(g?.name??'').trim(),target=Number(g?.target),saved=Number(g?.saved||0);if(!name||name.length>50||!Number.isFinite(target)||target<=0||target>100000000||!Number.isFinite(saved)||saved<0||saved>100000000)throw new Error('נמצא יעד חיסכון לא תקין בגיבוי');return{id:Date.now().toString(36)+'_'+Math.random().toString(36).slice(2),name,target,saved}});safePrefs.goals=JSON.stringify(clean)}
-  for(const [field,key] of [['monthlyLimit','mt_month_limit'],['bankBalance','mt_bank_balance'],['challengeGoal','mt_challenge_goal']]){const value=preferences[field];if(value!==undefined&&value!==null&&value!==''){const n=Number(value);if(!Number.isFinite(n)||n<0||n>1000000000)throw new Error('נמצאה הגדרה מספרית לא תקינה בגיבוי');safePrefs[key]=String(n)}}
+  for(const [field,key] of [['monthlyLimit','mt_month_limit'],['bankBalance','mt_bank_balance'],['challengeGoal','mt_challenge_goal']]){const value=preferences[field]??preferences[key];if(value!==undefined&&value!==null&&value!==''){const n=Number(value);if(!Number.isFinite(n)||n<0||n>1000000000)throw new Error('נמצאה הגדרה מספרית לא תקינה בגיבוי');safePrefs[key]=String(n)}}
+  for(const key of ['moneytrace_savings_pool_v1','moneytrace_savings_ledger_v1','moneytrace_savings_destination_v1','moneytrace_last_processed_week_v1']){
+   const value=preferences[key];
+   if(value!==undefined&&value!==null){
+    if(key==='moneytrace_savings_pool_v1'){const n=Number(value);if(!Number.isFinite(n)||n<0||n>1000000000)throw new Error('קופת החיסכון בגיבוי אינה תקינה');safePrefs[key]=String(n)}
+    else if(key==='moneytrace_savings_ledger_v1'){const ledger=typeof value==='string'?JSON.parse(value):value;if(!Array.isArray(ledger)||ledger.length>500)throw new Error('יומן החיסכון בגיבוי אינו תקין');safePrefs[key]=JSON.stringify(ledger)}
+    else if(key==='moneytrace_savings_destination_v1'){if(typeof value!=='string'||value.length>100)throw new Error('יעד החיסכון בגיבוי אינו תקין');safePrefs[key]=value}
+    else if(key==='moneytrace_last_processed_week_v1'){if(typeof value!=='string'||(value!==''&&!/^\d{4}-\d{2}-\d{2}$/.test(value)))throw new Error('תאריך עיבוד החיסכון בגיבוי אינו תקין');safePrefs[key]=value}
+   }
+  }
   if(!confirm('השחזור יחליף את התנועות, התקציבים ויעדי החיסכון הקיימים במכשיר. להמשיך?'))return;
-  transactions=restored;for(const [key,value] of Object.entries(safePrefs))localStorage.setItem(key,value);save();render();showToast('הגיבוי המלא שוחזר בהצלחה');
+  transactions=restored;for(const [key,value] of Object.entries(safePrefs))localStorage.setItem(key,value);if(window.mtUser)localStorage.setItem('moneytrace_financial_settings_owner_v1',window.mtUser.id);window.dispatchEvent(new CustomEvent('mt:financial-settings-loaded',{detail:{userId:window.mtUser?.id||null}}));save();render();showToast('הגיבוי המלא שוחזר בהצלחה');
  }catch(err){showToast(err.message||'לא ניתן לשחזר את קובץ הגיבוי')}
  finally{e.target.value=''}
 });
@@ -129,8 +139,10 @@ $('#backupInput').addEventListener('change',async e=>{
  function showApp(){gate.style.display='none';mainApp.style.display='';mobileNav.style.display=''}
  showGate('בודק התחברות…');
  if(!window.supabase||!window.MONEYTRACE_SUPABASE_URL||!window.MONEYTRACE_SUPABASE_PUBLISHABLE_KEY){status.textContent='שירות הענן לא נטען. בדוק חיבור לאינטרנט.';showGate('לא ניתן לטעון את שירות ההתחברות. בדוק אינטרנט ורענן את הדף.');return}
+ // Do not persist Supabase sessions in browser storage.
+ // The session remains in memory for this tab; signing in again is required after reload.
  const client=window.supabase.createClient(window.MONEYTRACE_SUPABASE_URL,window.MONEYTRACE_SUPABASE_PUBLISHABLE_KEY,{
-  auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:true}
+  auth:{persistSession:false,autoRefreshToken:true,detectSessionInUrl:false}
  });
  window.mtSupabase=client;window.mtUser=null;window.mtCloudSyncEnabled=false;
  const logout=$('#authLogout'),submit=$('#authSubmit'),signup=$('#authSignup');
@@ -149,6 +161,11 @@ $('#backupInput').addEventListener('change',async e=>{
   finally{settingsSyncing=false}
  }
  async function loadFinancialSettings(user){
+  const ownerKey='moneytrace_financial_settings_owner_v1';
+  // Store only a one-way fingerprint locally, never the raw account identifier.
+  const ownerDigest=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(user.id));
+  const ownerFingerprint=Array.from(new Uint8Array(ownerDigest),b=>b.toString(16).padStart(2,'0')).join('');
+  const previousOwner=localStorage.getItem(ownerKey);
   const {data,error}=await client.from('user_financial_settings').select('settings').eq('user_id',user.id).maybeSingle();
   if(error)throw error;
   applyingRemoteSettings=true;
@@ -157,9 +174,14 @@ $('#backupInput').addEventListener('change',async e=>{
    if(settings&&typeof settings==='object'&&!Array.isArray(settings)){
     for(const key of preferenceKeys){if(Object.prototype.hasOwnProperty.call(settings,key))localStorage.setItem(key,String(settings[key]));else localStorage.removeItem(key)}
    }else{
-    const initial=readPreferenceSnapshot();
-    if(Object.keys(initial).length){const {error:saveError}=await client.from('user_financial_settings').upsert({user_id:user.id,settings:initial,updated_at:new Date().toISOString()},{onConflict:'user_id'});if(saveError)throw saveError}
+    // Never copy settings left by a different signed-in account into a new account.
+    const initial=previousOwner===null||previousOwner===ownerFingerprint?readPreferenceSnapshot():{};
+    if(previousOwner!==null&&previousOwner!==ownerFingerprint){for(const key of preferenceKeys)localStorage.removeItem(key)}
+    const {error:saveError}=await client.from('user_financial_settings').upsert({user_id:user.id,settings:initial,updated_at:new Date().toISOString()},{onConflict:'user_id'});
+    if(saveError)throw saveError;
    }
+   localStorage.setItem(ownerKey,ownerFingerprint);
+   window.dispatchEvent(new CustomEvent('mt:financial-settings-loaded',{detail:{userId:user.id}}));
   }finally{applyingRemoteSettings=false}
  }
  const originalStorageSetItem=Storage.prototype.setItem;
@@ -177,7 +199,11 @@ $('#backupInput').addEventListener('change',async e=>{
  window.syncAll=syncAll;
  async function refreshFromCloud(){
   if(!window.mtUser||!window.mtCloudSyncEnabled||syncing||document.hidden)return;
-  const {data,error}=await client.from('transactions').select('id,description,category,date,type,amount').eq('user_id',window.mtUser.id);
+  // Avoid replacing a just-edited local list with a poll that may have started before its upload.
+  if(Date.now()-(window.mtLocalTransactionsChangedAt||0)<12000)return;
+  const requestedUserId=window.mtUser.id;
+  const {data,error}=await client.from('transactions').select('id,description,category,date,type,amount').eq('user_id',requestedUserId);
+  if(window.mtUser?.id!==requestedUserId||!window.mtCloudSyncEnabled||syncing||Date.now()-(window.mtLocalTransactionsChangedAt||0)<12000)return;
   if(error){status.textContent='שגיאה ברענון מהענן: '+error.message;return}
   const remote=(data||[]).map(r=>({id:r.id,description:r.description,category:r.category,date:r.date,type:r.type,amount:Number(r.amount)}));
   const before=JSON.stringify(transactions.slice().sort((a,b)=>String(a.id).localeCompare(String(b.id))));

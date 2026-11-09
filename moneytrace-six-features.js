@@ -3,14 +3,14 @@
  const $=s=>document.querySelector(s), money=n=>(window.moneyTraceFormatCurrency?window.moneyTraceFormatCurrency(n):'₪'+Number(n||0).toLocaleString('he-IL',{maximumFractionDigits:0}));
  const store=(k,v)=>{try{localStorage.setItem(k,String(v))}catch{}};
  const read=k=>{try{return localStorage.getItem(k)}catch{return null}};
- const dateNow=new Date(), ym=d=>`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`;
+ let dateNow=new Date(); const ym=d=>`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`;
  const parseDate=s=>{const d=new Date(String(s||'')+'T12:00:00');return isNaN(d)?null:d};
  const data=()=>Array.isArray(transactions)?transactions:[];
  const monthRows=(offset=0)=>{const d=new Date(dateNow.getFullYear(),dateNow.getMonth()+offset,1),key=ym(d);return data().filter(t=>String(t.date||'').slice(0,7)===key)};
  const sum=(a,type)=>a.filter(t=>type?t.type===type:t.type!=='income').reduce((v,t)=>v+Math.abs(Number(t.amount)||0),0);
  const escape=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
  function recurring(){const groups=new Map();data().filter(t=>t.type!=='income').forEach(t=>{const k=String(t.description||'').trim().toLowerCase();if(!k)return;if(!groups.has(k))groups.set(k,[]);groups.get(k).push(t)});return [...groups.entries()].flatMap(([name,items])=>{items.sort((a,b)=>String(a.date).localeCompare(String(b.date)));if(items.length<2)return[];const gaps=[];for(let i=1;i<items.length;i++){const a=parseDate(items[i-1].date),b=parseDate(items[i].date);if(a&&b)gaps.push((b-a)/86400000)}const cadence=gaps.some(g=>g>=25&&g<=35)?'חודשי':gaps.some(g=>g>=6&&g<=8)?'שבועי':null;if(!cadence)return[];const prev=Number(items.at(-2).amount)||0,last=Number(items.at(-1).amount)||0;return[{name,items,cadence,prev,last,changed:prev>0&&Math.abs(last-prev)/prev>=.05}]} )}
- function render(){const cur=monthRows(),prev=monthRows(-1),income=sum(cur,'income'),expense=sum(cur),days=new Date(dateNow.getFullYear(),dateNow.getMonth()+1,0).getDate(),day=Math.max(1,dateNow.getDate()),remaining=Math.max(0,days-day),daily=expense/day,forecastExpense=daily*days,forecastIncome=income/day*days,forecastNet=forecastIncome-forecastExpense;
+ function render(){dateNow=new Date();const cur=monthRows(),day=Math.max(1,dateNow.getDate()),prev=monthRows(-1).filter(t=>{const d=parseDate(t.date);return d&&d.getDate()<=day}),income=sum(cur,'income'),expense=sum(cur),days=new Date(dateNow.getFullYear(),dateNow.getMonth()+1,0).getDate(),remaining=Math.max(0,days-day),daily=expense/day,forecastExpense=daily*days,forecastIncome=income/day*days,forecastNet=forecastIncome-forecastExpense;
   const limit=Number(read('mt_month_limit'))||Number($('#mtMonthlyLimit')?.value)||0;const bank=read('mt_bank_balance');const subs=recurring();const monthlySubs=subs.filter(s=>s.cadence==='חודשי').reduce((a,s)=>a+s.last,0);
   const safe=bank!==null&&bank!==''?Math.max(0,Number(bank)-monthlySubs):Math.max(0,(limit?limit-expense:income-expense)-daily*remaining);
   $('#mtSafe').textContent=money(safe);$('#mtSafeExplain').textContent=bank!==null&&bank!==''?'יתרה שהזנת פחות מנויים חודשיים שזוהו (הערכה)':'הערכה לפי תזרים החודש וקצב ההוצאות; לא יתרת בנק';
