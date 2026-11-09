@@ -31,9 +31,16 @@ function queueCloudSave(){
  const snapshot=JSON.parse(JSON.stringify({profile,data}));
  cloudQueue=cloudQueue.then(async()=>{
   if(!cloudReady||!userId||window.mtUser?.id!==userId)return;
-  const {data:revision,error}=await window.mtSupabase.rpc('mt_save_business_workspace',{p_payload:snapshot,p_expected_revision:cloudRevision});
-  if(error)throw error;
-  cloudRevision=Number(revision);
+  const client=window.mtSupabase;
+  let result;
+  if(cloudRevision===0){
+   result=await client.from('mt_business_workspace_data').insert({user_id:userId,payload:snapshot,revision:1}).select('revision').single();
+  }else{
+   result=await client.from('mt_business_workspace_data').update({payload:snapshot,revision:cloudRevision+1,updated_at:new Date().toISOString()}).eq('user_id',userId).eq('revision',cloudRevision).select('revision').maybeSingle();
+  }
+  if(result.error)throw result.error;
+  if(!result.data)throw new Error('Workspace changed on another device. Reload before saving again.');
+  cloudRevision=Number(result.data.revision);
   cloudStatus='Synced to cloud';
  }).catch(error=>{
   cloudReady=false;cloudStatus='Sync paused';
@@ -59,9 +66,9 @@ async function hydrateCloud(){
    cloudRevision=0;
    // First sign-in migration: only this account's already-scoped local workspace is copied.
    if(profile||Object.values(data).some(v=>Array.isArray(v)&&v.length)){
-    const {data:revision,error:saveError}=await client.rpc('mt_save_business_workspace',{p_payload:{profile,data},p_expected_revision:0});
+    const {data:created,error:saveError}=await client.from('mt_business_workspace_data').insert({user_id:user.id,payload:{profile,data},revision:1}).select('revision').single();
     if(saveError)throw saveError;
-    cloudRevision=Number(revision);
+    cloudRevision=Number(created.revision);
    }
   }
   cloudReady=true;cloudStatus='Synced to cloud';
