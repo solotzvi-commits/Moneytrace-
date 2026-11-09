@@ -21,7 +21,7 @@ function view(id,title,sub,html){const s=document.createElement('section');s.id=
 function open(v){document.querySelectorAll('.view').forEach(x=>x.classList.toggle('active',x.id==='view-'+v));document.querySelectorAll('[data-view]').forEach(x=>x.classList.toggle('active',x.dataset.view===v));$('#pageTitle').textContent=v==='budgets'?'תקציבים חודשיים':'חיסכון';v==='budgets'?renderBudgets():renderGoals()}
 nav('budgets','₪','תקציב');nav('savings','◎','חיסכון');
 view('budgets','תקציבים חודשיים','הגדר מסגרת לכל קטגוריה ועקוב אחרי ההוצאות.',
-`<div id="budgetAlerts"></div><article class="feature-card"><h3>הגדרת תקציב</h3><form id="budgetForm" class="feature-form">
+`<article class="feature-card"><h3>תקרת הוצאות חודשית כוללת</h3><p class="feature-muted">התראה כשההוצאות הכוללות מתקרבות לתקרה או חורגות ממנה.</p><label>תקרה חודשית (₪)<input id="mtMonthlyLimit" type="number" min="0" placeholder="למשל 5000"></label></article><div id="budgetAlerts"></div><article class="feature-card"><h3>הגדרת תקציב</h3><form id="budgetForm" class="feature-form">
 <label>קטגוריה<select name="category">${['אוכל','תחבורה','בילויים','מנויים','קניות','חשבונות','בריאות','דיור','אחר'].map(x=>`<option>${x}</option>`).join('')}</select></label>
 <label>תקציב חודשי (₪)<input name="amount" type="number" min="1" required placeholder="1500"></label><button class="primary">שמירת תקציב</button></form></article><div id="budgetList"></div>`);
 $('#view-savings').insertAdjacentHTML('beforeend',
@@ -117,7 +117,7 @@ renderBudgets();renderGoals();
     $('#showSavingsReport').onclick=()=>showReport(ledger[ledger.length-1]||null);
   };
   const renderPool=()=>{
-    const view=$('#view-goals');if(!view)return;let card=$('#smartPoolCard');if(!card){card=document.createElement('article');card.id='smartPoolCard';card.className='feature-card';view.insertBefore(card,view.children[1]||null);}card.innerHTML=`<h3>קופת חיסכון כללית</h3><div style="font-size:26px;font-weight:800;color:#55d6a5">${cash(pool)}</div><p style="color:#aab7ca;font-size:11px">אומדן חיסכון שנוסף אוטומטית בעקבות ירידה בהוצאות שנרשמו.</p>`;
+    const view=$('#view-savings');if(!view)return;let card=$('#smartPoolCard');if(!card){card=document.createElement('article');card.id='smartPoolCard';card.className='feature-card';view.insertBefore(card,view.children[1]||null);}card.innerHTML=`<h3>קופת חיסכון כללית</h3><div style="font-size:26px;font-weight:800;color:#55d6a5">${cash(pool)}</div><p style="color:#aab7ca;font-size:11px">אומדן חיסכון שנוסף אוטומטית בעקבות ירידה בהוצאות שנרשמו.</p>`;
   };
   const init=()=>{processWeek();renderPanel();renderPool();};
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',init);else init();

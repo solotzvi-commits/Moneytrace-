@@ -22,13 +22,13 @@
   const avg=prev.length?sum(prev)/Math.max(1,prev.length):0;cur.filter(t=>t.type!=='income'&&Number(t.amount)>Math.max(250,avg*2.5)).slice(0,3).forEach(t=>alerts.push('הוצאה גבוהה יחסית: '+t.description+' ('+money(t.amount)+')'));
   $('#mtAlertCount').textContent=alerts.length+' התראות';$('#mtAlerts').innerHTML=alerts.length?alerts.map(x=>'• '+escape(x)).join('<br>'):'לא זוהו כרגע חריגות ברורות.';
   const goal=Number(read('mt_challenge_goal'))||Number($('#mtChallengeGoal')?.value)||0;const prevExpense=sum(prev);const saved=Math.max(0,prevExpense-expense);const pct=goal?Math.min(100,Math.round(saved/goal*100)):0;
-  $('#mtChallengeProgress').textContent=goal?`הפחתת הוצאות מול החודש הקודם: ${money(saved)} מתוך יעד ${money(goal)} (${pct}%). זהו מדד להשוואה, לא כסף שהועבר בפועל לחיסכון.`:'הזן יעד חיסכון כדי להתחיל אתגר חודשי. ההתקדמות תימדד מול ההוצאות בחודש הקודם.';
+  if($('#mtChallengeProgress'))$('#mtChallengeProgress').textContent=goal?`הפחתת הוצאות מול החודש הקודם: ${money(saved)} מתוך יעד ${money(goal)} (${pct}%). זהו מדד להשוואה, לא כסף שהועבר בפועל לחיסכון.`:'הזן יעד חיסכון כדי להתחיל אתגר חודשי. ההתקדמות תימדד מול ההוצאות בחודש הקודם.';
  }
  $('#mtBankBalance')?.addEventListener('change',e=>{store('mt_bank_balance',e.target.value);render()});
  $('#mtMonthlyLimit')?.addEventListener('change',e=>{store('mt_month_limit',e.target.value);render()});
  $('#mtChallengeGoal')?.addEventListener('change',e=>{store('mt_challenge_goal',e.target.value);render()});
  $('#mtBankBalance').value=read('mt_bank_balance')||'';$('#mtMonthlyLimit').value=read('mt_month_limit')||'';$('#mtChallengeGoal').value=read('mt_challenge_goal')||'';
- $('#mtAiAsk')?.addEventListener('click',async()=>{const q=$('#mtAiQuestion').value.trim();if(!q)return;const out=$('#mtAiAnswer');out.textContent='בודק חיבור מאובטח…';try{const client=window.mtSupabase;if(!client||!window.mtUser)throw new Error('יש להתחבר לחשבון ולפרוס את פונקציית השרת');const {data,error}=await client.functions.invoke('moneytrace-coach',{body:{question:q,summary:{month:ym(dateNow),income:sum(monthRows(),'income'),expenses:sum(monthRows()),subscriptions:recurring().map(s=>({name:s.name,amount:s.last,cadence:s.cadence})).slice(0,20)}}});if(error)throw error;out.textContent=data?.answer||'לא התקבלה תשובה';}catch(e){out.textContent='GPT עדיין לא מחובר: '+(e.message||'יש להגדיר פונקציית Supabase ומפתח API בשרת.');}});
+ // AI chat lives in the dedicated Assistant screen; Insights contains analysis only.
  const run=()=>{try{render()}catch(e){console.warn('MONEYTRACE six features',e)}};
  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',run);else run();
  document.addEventListener('visibilitychange',()=>{if(!document.hidden)run()});
