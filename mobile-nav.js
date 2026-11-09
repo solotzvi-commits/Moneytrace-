@@ -6,17 +6,17 @@
   const backdrop=document.getElementById('mobileMoreBackdrop');
   const list=document.getElementById('mobileMoreLinks');
   const closeButton=document.getElementById('mobileMoreClose');
-  const coreDefault=['overview','transactions','subscriptions','insights'];
+  const coreDefault=['overview','transactions','insights','savings'];
   const storageKey=()=>`moneytrace_mobile_tabs_v1_${window.mtUser?.id||'local'}`;
   let selected=[...coreDefault];
   const labels={
     overview:['◫','סקירה'],transactions:['↕','תנועות'],subscriptions:['⟳','מנויים'],
-    insights:['✧','תובנות'],connect:['⌁','חיבור חשבון'],business:['▣','ניהול עסק'],
+    insights:['✧','תובנות'],savings:['◎','חיסכון'],connect:['⌁','חיבור חשבון'],business:['▣','ניהול עסק'],
     budgets:['₪','תקציב'],goals:['◎','יעדים'],assistant:['✧','AI'],admin:['▥','נתוני שימוש']
   };
   if(!nav||!trigger||!backdrop||!list)return;
   const sources=()=>[...document.querySelectorAll('.sidebar [data-view]')].filter(b=>b.dataset.view&&!b.classList.contains('hidden')&&!b.hidden&&!b.closest('.hidden'));
-  const read=()=>{try{const raw=JSON.parse(localStorage.getItem(storageKey())||'null');if(Array.isArray(raw)&&raw.length===4&&new Set(raw).size===4&&raw.every(x=>labels[x]))selected=raw}catch{}};
+  const read=()=>{try{const raw=JSON.parse(localStorage.getItem(storageKey())||'null');if(Array.isArray(raw)&&raw.length===4){const migrated=raw.map(x=>x==='goals'?'savings':x);if(new Set(migrated).size===4&&migrated.every(x=>labels[x]))selected=migrated}}catch{}};
   const save=()=>{try{localStorage.setItem(storageKey(),JSON.stringify(selected))}catch{}};
   const meta=id=>{const source=sources().find(b=>b.dataset.view===id);if(source){const span=source.querySelector('span');const label=source.textContent.replace(span?.textContent||'','').trim();return [span?.textContent||labels[id]?.[0]||'•',label||labels[id]?.[1]||id]}return labels[id]||['•',id]};
   function renderBar(){
