@@ -290,7 +290,7 @@ $('#backupInput').addEventListener('change',async e=>{
    }
    await loadCloud(data.session.user);
   }else setSignedIn(null);
- }))().catch(err=>{
+ })().catch(err=>{
   authInitialized=true;setSignedIn(null);
   gateStatus.textContent='Google sign-in callback error: '+(err?.message||'Unknown error');
  });;
