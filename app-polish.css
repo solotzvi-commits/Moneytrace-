@@ -1,0 +1,36 @@
+/* MONEYTRACE visual consistency layer — scoped overrides, no data or layout logic. */
+:root{--mt-surface:#111b2b;--mt-surface-raised:#172438;--mt-border:rgba(148,163,184,.16);--mt-text:#edf3fb;--mt-muted:#9aabc0;--mt-accent:#55d6a5;--mt-radius:18px}
+#mainApp{color:var(--mt-text);font-family:Inter,ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif}
+#mainApp .panel,#mainApp .personal-module,#mainApp .stat-card,#mainApp .business-section,#mainApp .business-stat,#mainApp .business-customer-card{border:1px solid var(--mt-border);border-radius:var(--mt-radius);box-shadow:0 8px 28px rgba(0,0,0,.12)}
+#mainApp .panel,#mainApp .personal-module,#mainApp .stat-card{background:linear-gradient(155deg,rgba(23,36,56,.98),rgba(17,27,43,.98))}
+#mainApp h1,#mainApp h2,#mainApp h3{letter-spacing:-.025em}
+#mainApp p{line-height:1.65}
+#mainApp button,#mainApp input,#mainApp select,#mainApp textarea{font:inherit}
+#mainApp button{transition:background-color .16s ease,border-color .16s ease,transform .16s ease}
+#mainApp button:focus-visible,#mainApp a:focus-visible,#mainApp input:focus-visible,#mainApp select:focus-visible,#mainApp textarea:focus-visible{outline:2px solid var(--mt-accent);outline-offset:3px}
+#mainApp .primary{border-radius:12px;font-weight:750;box-shadow:0 5px 16px rgba(33,168,121,.14)}
+#mainApp .secondary,#mainApp .text-button{border-radius:11px}
+#mainApp input:not([type=checkbox]):not([type=radio]):not([type=range]),#mainApp select,#mainApp textarea{min-height:42px;border-radius:11px;border:1px solid var(--mt-border);background:#0d1726;color:var(--mt-text);padding:10px 12px}
+#mainApp .section-intro{gap:18px;margin-bottom:22px}
+#mainApp .table-wrap{border-radius:14px}
+#mainApp table{border-collapse:separate;border-spacing:0}
+#mainApp th{color:var(--mt-muted);font-weight:650}
+#mainApp td,#mainApp th{padding:12px 14px}
+#mainApp .sidebar{border-inline-end:1px solid var(--mt-border);background:#0d1726}
+#mainApp .nav-item{border-radius:11px;margin:3px 0}
+#mainApp .nav-item.active{background:rgba(85,214,165,.12);color:#8be8c3}
+#mainApp .topbar{border-bottom:1px solid var(--mt-border);padding-bottom:16px}
+#mainApp .business-section{margin-block:14px}
+#mainApp .business-section h2,#mainApp .business-section h3{margin-top:0}
+#mainApp .business-kpi-grid{gap:12px}
+#mainApp .business-kpi{border-radius:15px}
+#mainApp .personal-welcome{gap:18px}
+#mainApp .personal-balance-panel{border:1px solid rgba(85,214,165,.2);border-radius:22px}
+#mainApp .personal-metric{border-radius:16px}
+#mainApp .empty{border:1px dashed var(--mt-border);border-radius:14px;padding:24px}
+#mainApp .hint{color:var(--mt-muted);line-height:1.7}
+#mainApp .mobile-nav{border-top:1px solid var(--mt-border);background:rgba(13,23,38,.96);backdrop-filter:blur(18px)}
+#mainApp .mobile-nav button{min-height:56px}
+body.business-workspace-active .mobile-nav,body.business-workspace-active #mainMobileNav{display:none!important}
+@media(max-width:700px){#mainApp .main{padding-bottom:calc(84px + env(safe-area-inset-bottom))}#mainApp .personal-analysis-grid{gap:12px}#mainApp .business-grid{gap:10px}#mainApp .business-section{padding:14px}#mainApp .section-intro{margin-bottom:16px}}
+@media(prefers-reduced-motion:reduce){#mainApp *,#mainApp *::before,#mainApp *::after{transition:none!important;animation:none!important;scroll-behavior:auto!important}}
