@@ -18,8 +18,57 @@ const TYPES={
 const MODULES=[['dashboard','לוח בקרה'],['accounting','הנהלת חשבונות'],['customers','לקוחות'],['suppliers','ספקים'],['invoices','חשבוניות וגבייה'],['inventory','מלאי ומוצרים'],['staff','עובדים ומשמרות'],['special','כלים ייעודיים לעסק'],['cashflow','תזרים מזומנים'],['profit','רווחיות'],['tax','מעקב מסים'],['reports','דוחות'],['ai','יועץ עסקי AI']];
 const blank=()=>({customers:[],suppliers:[],products:[],invoices:[],entries:[],staff:[],special:[]});
 let profile=null,data=blank(),currentModule='dashboard';
+let initialized=false,cloudReady=false,cloudRevision=0,cloudQueue=Promise.resolve(),cloudStatus='Local device storage';
 function read(){try{profile=JSON.parse(localStorage.getItem(PROFILE())||'null')}catch{profile=null}try{data={...blank(),...JSON.parse(localStorage.getItem(STORE())||'{}')}}catch{data=blank()}if(profile){profile.modules=profile.modules||[];if(!profile.modules.includes('accounting'))profile.modules.push('accounting');}}
-function save(){localStorage.setItem(PROFILE(),JSON.stringify(profile));localStorage.setItem(STORE(),JSON.stringify(data))}
+function save(){
+ localStorage.setItem(PROFILE(),JSON.stringify(profile));
+ localStorage.setItem(STORE(),JSON.stringify(data));
+ if(cloudReady&&window.mtUser?.id&&window.mtSupabase)queueCloudSave();
+}
+function writeLocalSnapshot(){localStorage.setItem(PROFILE(),JSON.stringify(profile));localStorage.setItem(STORE(),JSON.stringify(data))}
+function queueCloudSave(){
+ const userId=window.mtUser?.id;
+ const snapshot=JSON.parse(JSON.stringify({profile,data}));
+ cloudQueue=cloudQueue.then(async()=>{
+  if(!cloudReady||!userId||window.mtUser?.id!==userId)return;
+  const {data:revision,error}=await window.mtSupabase.rpc('mt_save_business_workspace',{p_payload:snapshot,p_expected_revision:cloudRevision});
+  if(error)throw error;
+  cloudRevision=Number(revision);
+  cloudStatus='Synced to cloud';
+ }).catch(error=>{
+  cloudReady=false;cloudStatus='Sync paused';
+  console.error('MONEYTRACE business cloud sync failed',error);
+  toast('Business data is saved on this device, but cloud sync paused. Reload before making more changes on another device.');
+ });
+ return cloudQueue;
+}
+async function hydrateCloud(){
+ const user=window.mtUser,client=window.mtSupabase;
+ if(!user?.id||!client)return;
+ cloudReady=false;cloudStatus='Connecting to cloud…';
+ try{
+  const {data:row,error}=await client.from('mt_business_workspace_data').select('payload,revision').eq('user_id',user.id).maybeSingle();
+  if(error)throw error;
+  if(row?.payload){
+   profile=row.payload.profile||null;
+   data={...blank(),...(row.payload.data||{})};
+   cloudRevision=Number(row.revision||1);
+   writeLocalSnapshot();
+  }else{
+   cloudRevision=0;
+   // First sign-in migration: only this account's already-scoped local workspace is copied.
+   if(profile||Object.values(data).some(v=>Array.isArray(v)&&v.length)){
+    const {data:revision,error:saveError}=await client.rpc('mt_save_business_workspace',{p_payload:{profile,data},p_expected_revision:0});
+    if(saveError)throw saveError;
+    cloudRevision=Number(revision);
+   }
+  }
+  cloudReady=true;cloudStatus='Synced to cloud';
+ }catch(error){
+  cloudReady=false;cloudStatus='Cloud sync unavailable';
+  console.error('MONEYTRACE business workspace could not load from cloud',error);
+ }
+}
 function toast(s){if(typeof showToast==='function')showToast(s);else alert(s)}
 function sum(arr,fn){return arr.reduce((n,x)=>n+fn(x),0)}
 function currentEntries(){return data.entries.filter(x=>String(x.date).slice(0,7)===month())}
@@ -94,9 +143,24 @@ function renderAccounting(){
  return '<section class="business-section"><div class="business-card-title"><div><h3>הנהלת חשבונות כפולה</h3><p>יומן פקודות, מאזן בוחן, רווח והפסד ומאזן. כל פקודה חייבת להיות מאוזנת.</p></div></div><div class="business-grid">'+stat('הכנסות חשבונאיות',fmt(summary.profitAndLoss.income)) + stat('הוצאות חשבונאיות',fmt(summary.profitAndLoss.expenses))+stat('רווח / הפסד',fmt(summary.profitAndLoss.net))+stat('תנועת מזומן נטו',fmt(summary.cashMovement))+'</div><div class="business-alert '+(summary.isBalanced?'':'business-alert-danger')+'">'+(summary.isBalanced?'המאזן מאוזן לפי הפקודות שנרשמו.':'נמצאה אי-התאמה במאזן. יש לבדוק את הפקודות.')+' זהו רישום ניהולי בלבד ואינו אישור חשבונאי או מס.</div><div class="business-forms"><form class="business-form" id="bizJournal"><h4>＋ רישום פקודת יומן</h4><label>תאריך<input name="date" type="date" value="'+today()+'" required></label><label>תיאור הפקודה<input name="memo" required placeholder="למשל: מכירה שהתקבלה בבנק"></label><label>חשבון חובה<select name="debitAccount">'+opts+'</select></label><label>חשבון זכות<select name="creditAccount">'+opts.replace('value="1000"','value="1000"')+'</select></label><label>סכום (₪)<input name="amount" type="number" min="0.01" step="0.01" required></label><button class="primary">בדיקה ושמירת פקודה מאוזנת</button><small class="business-muted">כל פקודה נשמרת ביומן. אין מחיקה או שינוי של פקודה לאחר רישומה.</small></form><div class="business-form"><h4>דוחות חשבונאיים</h4><div class="business-mini-metrics"><div><span>נכסים</span><b>'+fmt(summary.balanceSheet.assets)+'</b></div><div><span>התחייבויות</span><b>'+fmt(summary.balanceSheet.liabilities)+'</b></div><div><span>הון עצמי כולל רווח תקופתי</span><b>'+fmt(summary.balanceSheet.equity)+'</b></div><div><span>הפרש מאזן</span><b>'+fmt(summary.balanceSheet.difference)+'</b></div></div><button class="secondary" id="bizAccountingExport">ייצוא דוחות חשבונאיים (CSV)</button></div></div><div class="business-section"><h3>מאזן בוחן</h3><div class="business-table-wrap"><table><thead><tr><th>קוד</th><th>חשבון</th><th>חובה</th><th>זכות</th><th>יתרה</th></tr></thead><tbody>'+trial+'</tbody></table></div></div><div class="business-section"><h3>פקודות אחרונות</h3>'+(rows||'<div class="business-empty">עדיין לא נרשמו פקודות יומן.</div>')+'</div><small class="business-muted">הנתונים נשמרים כרגע מקומית במכשיר זה. יש לגבות ולסנכרן אותם לפני שימוש עסקי אמיתי. MONEYTRACE אינו מפיק דוחות סטטוטוריים ואינו מגיש דיווחי מס.</small></section>';
 }
 function moduleSection(key){return ({dashboard:renderDashboard,accounting:renderAccounting,customers:renderCustomers,suppliers:renderSuppliers,invoices:renderInvoices,inventory:renderInventory,staff:renderStaff,special:renderSpecial,cashflow:renderCashflow,profit:renderProfit,tax:renderTax,reports:renderReports,ai:renderAI})[key]?.()||''}
-function renderSettings(){return `<section class="business-section"><h3>התאמת סביבת העסק</h3><p>בחר אילו כלים להציג. אפשר להפעיל או לכבות מודולים בכל עת.</p><div class="business-settings">${MODULES.map(([k,n])=>`<label><input type="checkbox" data-biz-module="${k}" ${active(k)?'checked':''}>${n}</label>`).join('')}</div><div class="business-actions" style="margin-top:14px"><button id="bizEditProfile">שינוי סוג העסק / פרטים</button><button id="bizReset">איפוס סביבת העסק</button></div><small class="business-muted">הנתונים העסקיים נשמרים בנפרד מהתנועות האישיות. כרגע הם נשמרים מקומית במכשיר זה ואינם מסונכרנים לענן.</small></section>`}
+function renderSettings(){return `<section class="business-section"><h3>התאמת סביבת העסק</h3><p>בחר אילו כלים להציג. אפשר להפעיל או לכבות מודולים בכל עת.</p><div class="business-settings">${MODULES.map(([k,n])=>`<label><input type="checkbox" data-biz-module="${k}" ${active(k)?'checked':''}>${n}</label>`).join('')}</div><div class="business-actions" style="margin-top:14px"><button id="bizEditProfile">שינוי סוג העסק / פרטים</button><button id="bizReset">איפוס סביבת העסק</button></div><small class="business-muted">הנתונים העסקיים נשמרים בנפרד מהתנועות האישיות. סטטוס סנכרון: ${esc(cloudStatus)}. הנתונים העסקיים נשמרים בחשבון שלך כאשר החיבור זמין.</small></section>`}
 function render(){const root=$('#businessRoot');if(!root)return;if(!profile){root.innerHTML=onboarding();return}const t=TYPES[profile.type]||TYPES.other;const available=MODULES.filter(([k])=>active(k));if(!available.some(([k])=>k===currentModule))currentModule=available[0]?.[0]||'dashboard';const nav=available.map(([k,n])=>`<button type="button" class="business-tab ${currentModule===k?'active':''}" data-biz-view="${k}">${n}</button>`).join('');root.innerHTML=`<div class="business-hero"><div style="display:flex;justify-content:space-between;gap:12px;align-items:flex-start;flex-wrap:wrap"><div><span class="business-chip">Business Mode</span><h2>${esc(profile.name)} · ${t.name}</h2><p>${t.desc}. סביבת העסק שלך מופרדת מהמרחב האישי.</p></div><button class="secondary" id="bizEditProfile">⚙ פרטי העסק</button></div></div><nav class="business-tabs" aria-label="ניווט עסקי">${nav}<button type="button" class="business-tab ${currentModule==='settings'?'active':''}" data-biz-view="settings">⚙ הגדרות</button></nav><div class="business-page">${currentModule==='settings'?renderSettings():moduleSection(currentModule)}</div>`}
-window.renderBusinessMode=render;
+async function initialize(){
+ if(!initialized){initialized=true;read();}
+ if(window.mtUser?.id&&window.mtSupabase&&!cloudReady){
+  await hydrateCloud();
+ }
+ render();
+}
+window.renderBusinessMode=()=>{initialize().catch(error=>{console.error(error);render()})};
+window.addEventListener('mt:user-ready',()=>{
+ if(window.mtUser?.id&&window.mtSupabase){
+  hydrateCloud().then(()=>{if(initialized)render()});
+ }else{
+  cloudReady=false;cloudRevision=0;cloudStatus='Local device storage';
+  read();if(initialized)render();
+ }
+});
 document.addEventListener('submit',e=>{const f=e.target;if(f.id==='bizSetup'){e.preventDefault();const old=profile;profile=defaultProfile(Object.fromEntries(new FormData(f)));if(old&&old.type===profile.type)profile.modules=old.modules;save();render();toast('סביבת העסק נשמרה');return}if(!profile)return;
 if(f.id==='bizJournal'){e.preventDefault();try{const v=Object.fromEntries(new FormData(f)),amount=Number(v.amount);const entry={id:crypto.randomUUID?.()||String(Date.now()),date:v.date,memo:v.memo,createdAt:new Date().toISOString(),lines:[{account:v.debitAccount,debit:amount,credit:0},{account:v.creditAccount,debit:0,credit:amount}]};window.MTBusinessAccounting.validateJournal(entry);data.accountingJournal=data.accountingJournal||[];data.accountingJournal.push(entry);window.MTBusinessAccounting.validateJournalSet(data.accountingJournal);save();render();toast('פקודת היומן נשמרה ומאוזנת')}catch(err){toast(err.message||'לא ניתן לשמור את הפקודה')}return}
  if(f.id==='bizEntry'){e.preventDefault();const v=Object.fromEntries(new FormData(f));data.entries.push({id:crypto.randomUUID?.()||String(Date.now()),...v,amount:+v.amount});save();render();toast('התנועה העסקית נשמרה')}
