@@ -134,7 +134,7 @@ $('#backupInput').addEventListener('change',async e=>{
  });
  window.mtSupabase=client;window.mtUser=null;window.mtCloudSyncEnabled=false;
  const logout=$('#authLogout'),submit=$('#authSubmit'),signup=$('#authSignup');
- let pollHandle=null, syncing=false, syncPending=false;
+ let pollHandle=null, syncing=false, syncPending=false, authInitialized=false;
  function setSignedIn(user){window.mtUser=user;window.mtCloudSyncEnabled=false;window.dispatchEvent(new Event("mt:user-ready"));const logged=!!user;status.textContent=logged?'מחובר לחשבון. טוען נתונים…':'עדיין לא מחובר לחשבון ענן.';email.disabled=logged;password.disabled=logged;submit.classList.toggle('hidden',logged);signup.classList.toggle('hidden',logged);logout.classList.toggle('hidden',!logged);if(!logged)showGate('התחבר או צור חשבון כדי להיכנס ל־MONEYTRACE.');}
  function cacheCurrent(){localStorage.setItem(KEY,JSON.stringify(transactions));isDemo=false;render()}
  async function syncAll(){
@@ -204,17 +204,22 @@ $('#backupInput').addEventListener('change',async e=>{
   if(event==='SIGNED_IN'&&session?.user&&window.mtUser?.id!==session.user.id){
    setTimeout(()=>loadCloud(session.user),0);
   }
-  if(event==='SIGNED_OUT'){
-   window.mtCloudSyncEnabled=false;
-   if(pollHandle)clearInterval(pollHandle);
-   window.mtUser=null;
-   setSignedIn(null);
+  if(event==='SIGNED_OUT'&&authInitialized){
+   // Confirm the session is still absent before switching the UI to signed-out.
+   setTimeout(async()=>{
+    const {data}=await client.auth.getSession().catch(()=>({data:{session:null}}));
+    if(data?.session?.user)return;
+    window.mtCloudSyncEnabled=false;
+    if(pollHandle){clearInterval(pollHandle);pollHandle=null;}
+    window.mtUser=null;setSignedIn(null);
+   },0);
   }
  });
  client.auth.getSession().then(async({data,error})=>{
+  authInitialized=true;
   if(error){
    status.textContent='לא ניתן לבדוק התחברות: '+error.message;
-   setSignedIn(null);
+   gateStatus.textContent='לא ניתן לאמת את ההתחברות כרגע. בדוק חיבור ונסה לרענן.';
    return;
   }
   if(data.session?.user){
