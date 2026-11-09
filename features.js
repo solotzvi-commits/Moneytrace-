@@ -18,13 +18,13 @@ const css=document.createElement('style');css.textContent=`
 `;document.head.appendChild(css);
 function nav(view,icon,label){const n=document.querySelector('.sidebar nav');if(!n)return;const b=document.createElement('button');b.className='nav-item';b.dataset.view=view;b.innerHTML=`<span>${icon}</span> ${label}`;b.onclick=()=>open(view);n.appendChild(b)}
 function view(id,title,sub,html){const s=document.createElement('section');s.id='view-'+id;s.className='view';s.innerHTML=`<div class="section-intro"><div><h2>${title}</h2><p>${sub}</p></div></div>${html}`;$('.main').appendChild(s)}
-function open(v){document.querySelectorAll('.view').forEach(x=>x.classList.toggle('active',x.id==='view-'+v));document.querySelectorAll('[data-view]').forEach(x=>x.classList.toggle('active',x.dataset.view===v));$('#pageTitle').textContent=v==='budgets'?'תקציבים חודשיים':'יעדי חיסכון';v==='budgets'?renderBudgets():renderGoals()}
-nav('budgets','₪','תקציב');nav('goals','◎','יעדים');
+function open(v){document.querySelectorAll('.view').forEach(x=>x.classList.toggle('active',x.id==='view-'+v));document.querySelectorAll('[data-view]').forEach(x=>x.classList.toggle('active',x.dataset.view===v));$('#pageTitle').textContent=v==='budgets'?'תקציבים חודשיים':'חיסכון';v==='budgets'?renderBudgets():renderGoals()}
+nav('budgets','₪','תקציב');nav('savings','◎','חיסכון');
 view('budgets','תקציבים חודשיים','הגדר מסגרת לכל קטגוריה ועקוב אחרי ההוצאות.',
 `<div id="budgetAlerts"></div><article class="feature-card"><h3>הגדרת תקציב</h3><form id="budgetForm" class="feature-form">
 <label>קטגוריה<select name="category">${['אוכל','תחבורה','בילויים','מנויים','קניות','חשבונות','בריאות','דיור','אחר'].map(x=>`<option>${x}</option>`).join('')}</select></label>
 <label>תקציב חודשי (₪)<input name="amount" type="number" min="1" required placeholder="1500"></label><button class="primary">שמירת תקציב</button></form></article><div id="budgetList"></div>`);
-view('goals','יעדי חיסכון','קבע יעד, עקוב אחרי ההתקדמות וראה כמה עוד נשאר.',
+view('savings','יעדי חיסכון','קבע יעד, עקוב אחרי ההתקדמות וראה כמה עוד נשאר.',
 `<article class="feature-card"><h3>יצירת יעד חדש</h3><form id="goalForm" class="feature-form">
 <label>שם היעד<input name="name" required maxlength="50" placeholder="למשל חופשה"></label>
 <label>סכום יעד (₪)<input name="target" type="number" min="1" required></label>
