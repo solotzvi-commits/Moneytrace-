@@ -139,10 +139,10 @@ $('#backupInput').addEventListener('change',async e=>{
  function showApp(){gate.style.display='none';mainApp.style.display='';mobileNav.style.display=''}
  showGate('בודק התחברות…');
  if(!window.supabase||!window.MONEYTRACE_SUPABASE_URL||!window.MONEYTRACE_SUPABASE_PUBLISHABLE_KEY){status.textContent='שירות הענן לא נטען. בדוק חיבור לאינטרנט.';showGate('לא ניתן לטעון את שירות ההתחברות. בדוק אינטרנט ורענן את הדף.');return}
- // Do not persist Supabase sessions in browser storage.
- // The session remains in memory for this tab; signing in again is required after reload.
+ // Persist the Supabase session so OAuth callbacks and installed PWAs can resume
+ // after the browser returns from Google. Sign-out clears the stored session.
  const client=window.supabase.createClient(window.MONEYTRACE_SUPABASE_URL,window.MONEYTRACE_SUPABASE_PUBLISHABLE_KEY,{
-  auth:{persistSession:false,autoRefreshToken:true,detectSessionInUrl:false,flowType:'pkce',storage:window.localStorage}
+  auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:true,flowType:'pkce',storage:window.localStorage}
  });
  window.mtSupabase=client;window.mtUser=null;window.mtCloudSyncEnabled=false;
  const logout=$('#authLogout'),submit=$('#authSubmit'),signup=$('#authSignup');
@@ -247,8 +247,8 @@ $('#backupInput').addEventListener('change',async e=>{
  const googleButton=$('#gateGoogle');
  googleButton?.addEventListener('click',async()=>{
   googleButton.disabled=true;gateStatus.textContent='מעביר להתחברות עם Google…';
-  try{localStorage.setItem('mt_google_oauth_pending','1');const {error}=await client.auth.signInWithOAuth({provider:'google',options:{redirectTo:'https://solotzvi-commits.github.io/Moneytrace-/'}});if(error)throw error}
-  catch(err){localStorage.removeItem('mt_google_oauth_pending');gateStatus.textContent=authMessage(err,'login');googleButton.disabled=false}
+  try{const {error}=await client.auth.signInWithOAuth({provider:'google',options:{redirectTo:'https://solotzvi-commits.github.io/Moneytrace-/'}});if(error)throw error}
+  catch(err){gateStatus.textContent=authMessage(err,'login');googleButton.disabled=false}
  });
  form.addEventListener('submit',async e=>{e.preventDefault();submit.disabled=true;try{const {data,error}=await client.auth.signInWithPassword({email:email.value.trim(),password:password.value});if(error)throw error;if(data.user)await loadCloud(data.user)}catch(err){status.textContent='שגיאת התחברות: '+err.message}finally{submit.disabled=false}});
  signup.addEventListener('click',async()=>{if(!email.value.trim()||password.value.length<8){status.textContent='הזן אימייל וסיסמה של לפחות 8 תווים.';return}signup.disabled=true;try{const {data,error}=await client.auth.signUp({email:email.value.trim(),password:password.value,options:{emailRedirectTo:'https://solotzvi-commits.github.io/Moneytrace-/'}});if(error)throw error;if(data.session&&data.user)await loadCloud(data.user);else status.textContent='נשלח אליך אימייל לאימות. פתח אותו ואז חזור לאתר והתחבר.'}catch(err){status.textContent='שגיאת הרשמה: '+err.message}finally{signup.disabled=false}});
@@ -270,29 +270,13 @@ $('#backupInput').addEventListener('change',async e=>{
   }
  });
  (async()=>{
-  const callbackUrl=new URL(window.location.href);
-  const authCode=callbackUrl.searchParams.get('code');
-  const oauthError=callbackUrl.searchParams.get('error_description')||callbackUrl.searchParams.get('error');
-  const cleanCallbackUrl=()=>window.history.replaceState({},document.title,callbackUrl.pathname+callbackUrl.hash);
-  if(oauthError){
-   cleanCallbackUrl();localStorage.removeItem('mt_google_oauth_pending');authInitialized=true;setSignedIn(null);
-   gateStatus.textContent='Google sign-in failed: '+oauthError;return;
-  }
-  if(authCode){
-   gateStatus.textContent='Completing Google sign-in…';
-   const {error:exchangeError}=await client.auth.exchangeCodeForSession(authCode);
-   cleanCallbackUrl();authInitialized=true;
-   if(exchangeError){
-    localStorage.removeItem('mt_google_oauth_pending');setSignedIn(null);
-    gateStatus.textContent='Google sign-in could not be completed: '+exchangeError.message;return;
-   }
-   localStorage.removeItem('mt_google_oauth_pending');
-   // SIGNED_IN is handled by the listener above after the exchange completes.
-   return;
-  }
-  if(localStorage.getItem('mt_google_oauth_pending')==='1'){
-   localStorage.removeItem('mt_google_oauth_pending');authInitialized=true;setSignedIn(null);
-   gateStatus.textContent='Google returned to MONEYTRACE without an authorization code. Please start sign-in again.';return;
+  // Supabase JS handles the PKCE code exchange during client initialization.
+  // Waiting on getSession() ensures the callback has completed before cloud loading.
+  const callbackError=new URLSearchParams(location.search).get('error_description')||new URLSearchParams(location.search).get('error');
+  if(callbackError){
+   window.history.replaceState({},document.title,location.pathname+location.hash);
+   authInitialized=true;setSignedIn(null);
+   gateStatus.textContent='Google sign-in failed: '+callbackError;return;
   }
   const {data,error}=await client.auth.getSession();
   authInitialized=true;
