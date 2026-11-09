@@ -454,3 +454,18 @@ body.mt-light .mobile-more-link{background:#f8fafc;border-color:#dce3ec;color:#2
 .business-customer-history{border-top:1px solid #26364b;margin-top:10px;padding-top:8px}
 .business-form textarea{width:100%;resize:vertical;font:12px 'Heebo',sans-serif;color:#e6edf7;background:#0d1624;border:1px solid #2a3a52;border-radius:9px;padding:10px 12px}
 @media(max-width:650px){.business-customer-head{align-items:flex-start}.business-customer-balance{white-space:nowrap}.business-customer-footer{gap:7px}.business-customer-meta{display:grid;gap:5px}}
+
+#businessRoot .business-finance-strip{background:var(--panel);border:1px solid var(--biz-border);border-radius:10px;padding:15px;margin:0 0 16px}
+#businessRoot .business-finance-heading{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:12px}
+#businessRoot .business-finance-heading b,#businessRoot .business-finance-heading small{display:block}
+#businessRoot .business-finance-heading b{font-size:14px}
+#businessRoot .business-finance-heading small,#businessRoot .business-finance-note,#businessRoot .business-finance-disclaimer{font-size:10px;color:#91a0b5}
+#businessRoot .business-finance-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:9px}
+#businessRoot .business-finance-grid>div,#businessRoot .business-finance-grid>button{display:flex;flex-direction:column;align-items:flex-start;gap:5px;min-width:0;padding:12px;background:rgba(148,163,184,.07);border:1px solid var(--biz-border);border-radius:8px;color:inherit;text-align:right}
+#businessRoot .business-finance-grid>button{cursor:pointer;font:inherit}
+#businessRoot .business-finance-grid small,#businessRoot .business-finance-grid span{font-size:10px;color:#91a0b5}
+#businessRoot .business-finance-grid strong{font-size:19px;overflow-wrap:anywhere}
+#businessRoot .business-finance-disclaimer{line-height:1.6;margin:11px 0 0}
+@media(max-width:600px){#businessRoot .business-finance-grid{grid-template-columns:repeat(2,minmax(0,1fr))}#businessRoot .business-finance-heading{align-items:flex-start;flex-direction:column}}
+body.mt-light #businessRoot .business-finance-strip{background:#fff}
+body.mt-light #businessRoot .business-finance-grid>div,body.mt-light #businessRoot .business-finance-grid>button{background:#f7f9fc}
