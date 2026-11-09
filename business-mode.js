@@ -18,7 +18,7 @@ const TYPES={
 const MODULES=[['dashboard','לוח בקרה'],['accounting','הנהלת חשבונות'],['customers','לקוחות'],['suppliers','ספקים'],['invoices','חשבוניות וגבייה'],['inventory','מלאי ומוצרים'],['staff','עובדים ומשמרות'],['special','כלים ייעודיים לעסק'],['cashflow','תזרים מזומנים'],['profit','רווחיות'],['tax','מעקב מסים'],['reports','דוחות'],['ai','יועץ עסקי AI']];
 const blank=()=>({customers:[],suppliers:[],products:[],invoices:[],entries:[],staff:[],special:[]});
 let profile=null,data=blank(),currentModule='dashboard';
-let initialized=false,cloudReady=false,cloudRevision=0,cloudQueue=Promise.resolve(),cloudStatus='Local device storage';
+let initialized=false,cloudReady=false,cloudLoading=false,cloudRevision=0,cloudQueue=Promise.resolve(),cloudStatus='Local device storage';
 function read(){try{profile=JSON.parse(localStorage.getItem(PROFILE())||'null')}catch{profile=null}try{data={...blank(),...JSON.parse(localStorage.getItem(STORE())||'{}')}}catch{data=blank()}if(profile){profile.modules=profile.modules||[];if(!profile.modules.includes('accounting'))profile.modules.push('accounting');}}
 function save(){
  localStorage.setItem(PROFILE(),JSON.stringify(profile));
@@ -44,11 +44,12 @@ function queueCloudSave(){
 }
 async function hydrateCloud(){
  const user=window.mtUser,client=window.mtSupabase;
- if(!user?.id||!client)return;
- cloudReady=false;cloudStatus='Connecting to cloud…';
+ if(!user?.id||!client||cloudLoading)return;
+ cloudLoading=true;cloudReady=false;cloudStatus='Connecting to cloud…';
  try{
   const {data:row,error}=await client.from('mt_business_workspace_data').select('payload,revision').eq('user_id',user.id).maybeSingle();
   if(error)throw error;
+  if(window.mtUser?.id!==user.id)return;
   if(row?.payload){
    profile=row.payload.profile||null;
    data={...blank(),...(row.payload.data||{})};
@@ -67,7 +68,7 @@ async function hydrateCloud(){
  }catch(error){
   cloudReady=false;cloudStatus='Cloud sync unavailable';
   console.error('MONEYTRACE business workspace could not load from cloud',error);
- }
+ }finally{cloudLoading=false}
 }
 function toast(s){if(typeof showToast==='function')showToast(s);else alert(s)}
 function sum(arr,fn){return arr.reduce((n,x)=>n+fn(x),0)}
@@ -154,6 +155,7 @@ async function initialize(){
 }
 window.renderBusinessMode=()=>{initialize().catch(error=>{console.error(error);render()})};
 window.addEventListener('mt:user-ready',()=>{
+ if(!initialized){read();initialized=true;}
  if(window.mtUser?.id&&window.mtSupabase){
   hydrateCloud().then(()=>{if(initialized)render()});
  }else{
