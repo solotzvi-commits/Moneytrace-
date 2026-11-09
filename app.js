@@ -142,7 +142,7 @@ $('#backupInput').addEventListener('change',async e=>{
  // Do not persist Supabase sessions in browser storage.
  // The session remains in memory for this tab; signing in again is required after reload.
  const client=window.supabase.createClient(window.MONEYTRACE_SUPABASE_URL,window.MONEYTRACE_SUPABASE_PUBLISHABLE_KEY,{
-  auth:{persistSession:false,autoRefreshToken:true,detectSessionInUrl:true,flowType:'pkce',storage:window.localStorage}
+  auth:{persistSession:false,autoRefreshToken:true,detectSessionInUrl:false,flowType:'pkce',storage:window.localStorage}
  });
  window.mtSupabase=client;window.mtUser=null;window.mtCloudSyncEnabled=false;
  const logout=$('#authLogout'),submit=$('#authSubmit'),signup=$('#authSignup');
@@ -247,8 +247,8 @@ $('#backupInput').addEventListener('change',async e=>{
  const googleButton=$('#gateGoogle');
  googleButton?.addEventListener('click',async()=>{
   googleButton.disabled=true;gateStatus.textContent='מעביר להתחברות עם Google…';
-  try{const {error}=await client.auth.signInWithOAuth({provider:'google',options:{redirectTo:'https://solotzvi-commits.github.io/Moneytrace-/'}});if(error)throw error}
-  catch(err){gateStatus.textContent=authMessage(err,'login');googleButton.disabled=false}
+  try{localStorage.setItem('mt_google_oauth_pending','1');const {error}=await client.auth.signInWithOAuth({provider:'google',options:{redirectTo:'https://solotzvi-commits.github.io/Moneytrace-/'}});if(error)throw error}
+  catch(err){localStorage.removeItem('mt_google_oauth_pending');gateStatus.textContent=authMessage(err,'login');googleButton.disabled=false}
  });
  form.addEventListener('submit',async e=>{e.preventDefault();submit.disabled=true;try{const {data,error}=await client.auth.signInWithPassword({email:email.value.trim(),password:password.value});if(error)throw error;if(data.user)await loadCloud(data.user)}catch(err){status.textContent='שגיאת התחברות: '+err.message}finally{submit.disabled=false}});
  signup.addEventListener('click',async()=>{if(!email.value.trim()||password.value.length<8){status.textContent='הזן אימייל וסיסמה של לפחות 8 תווים.';return}signup.disabled=true;try{const {data,error}=await client.auth.signUp({email:email.value.trim(),password:password.value,options:{emailRedirectTo:'https://solotzvi-commits.github.io/Moneytrace-/'}});if(error)throw error;if(data.session&&data.user)await loadCloud(data.user);else status.textContent='נשלח אליך אימייל לאימות. פתח אותו ואז חזור לאתר והתחבר.'}catch(err){status.textContent='שגיאת הרשמה: '+err.message}finally{signup.disabled=false}});
@@ -269,24 +269,45 @@ $('#backupInput').addEventListener('change',async e=>{
    },0);
   }
  });
- client.auth.getSession().then(async({data,error})=>{
+ (async()=>{
+  const callbackUrl=new URL(window.location.href);
+  const authCode=callbackUrl.searchParams.get('code');
+  const oauthError=callbackUrl.searchParams.get('error_description')||callbackUrl.searchParams.get('error');
+  const cleanCallbackUrl=()=>window.history.replaceState({},document.title,callbackUrl.pathname+callbackUrl.hash);
+  if(oauthError){
+   cleanCallbackUrl();localStorage.removeItem('mt_google_oauth_pending');authInitialized=true;setSignedIn(null);
+   gateStatus.textContent='Google sign-in failed: '+oauthError;return;
+  }
+  if(authCode){
+   gateStatus.textContent='Completing Google sign-in…';
+   const {error:exchangeError}=await client.auth.exchangeCodeForSession(authCode);
+   cleanCallbackUrl();authInitialized=true;
+   if(exchangeError){
+    localStorage.removeItem('mt_google_oauth_pending');setSignedIn(null);
+    gateStatus.textContent='Google sign-in could not be completed: '+exchangeError.message;return;
+   }
+   localStorage.removeItem('mt_google_oauth_pending');
+   // SIGNED_IN is handled by the listener above after the exchange completes.
+   return;
+  }
+  if(localStorage.getItem('mt_google_oauth_pending')==='1'){
+   localStorage.removeItem('mt_google_oauth_pending');authInitialized=true;setSignedIn(null);
+   gateStatus.textContent='Google returned to MONEYTRACE without an authorization code. Please start sign-in again.';return;
+  }
+  const {data,error}=await client.auth.getSession();
   authInitialized=true;
   if(error){
    status.textContent='לא ניתן לבדוק התחברות: '+error.message;
-   gateStatus.textContent='לא ניתן לאמת את ההתחברות כרגע. בדוק חיבור ונסה לרענן.';
-   return;
+   gateStatus.textContent='לא ניתן לאמת את ההתחברות כרגע. בדוק חיבור ונסה לרענן.';return;
   }
   if(data.session?.user){
    if(new URLSearchParams(location.search).has('reset-password')){
-    await loadCloud(data.session.user);
-    window.dispatchEvent(new Event('mt:password-recovery'));
-    return;
+    await loadCloud(data.session.user);window.dispatchEvent(new Event('mt:password-recovery'));return;
    }
-   // Restore the existing Supabase session on this device. Tokens are persisted and
-   // refreshed by supabase-js; only an explicit sign-out ends the session.
    await loadCloud(data.session.user);
-  }else{
-   setSignedIn(null);
-  }
- });
+  }else setSignedIn(null);
+ })().catch(err=>{
+  authInitialized=true;setSignedIn(null);
+  gateStatus.textContent='Google sign-in callback error: '+(err?.message||'Unknown error');
+ });;
 })();
