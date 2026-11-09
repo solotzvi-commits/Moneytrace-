@@ -28,7 +28,7 @@ function addSecuritySettings(){
  $('#mtSignOutAll').addEventListener('click',async()=>{if(!window.mtSupabase||!window.mtUser){toast('יש להתחבר תחילה');return}if(!confirm('להתנתק מכל המכשירים המחוברים לחשבון?'))return;const {error}=await window.mtSupabase.auth.signOut({scope:'global'});if(error){toast('ההתנתקות נכשלה: '+error.message);return}toast('ההתנתקות מכל המכשירים בוצעה')});
 }
 function fullBackup(){
- const id=userId(),keys=[scoped('transactions'),scoped('business_data'),scoped('business_profile'),scoped('preferences'),scoped('workspace'),'moneytrace_transactions_v1','moneytrace_budgets_v1','moneytrace_goals_v1','mt_bank_balance','mt_month_limit','mt_challenge_goal'];
+ const id=userId(),keys=[scoped('transactions'),scoped('business_data'),scoped('business_profile'),scoped('preferences'),scoped('workspace'),'moneytrace_transactions_v1','moneytrace_budgets_v1','moneytrace_goals_v1','moneytrace_savings_pool_v1','moneytrace_savings_ledger_v1','moneytrace_savings_destination_v1','moneytrace_last_processed_week_v1','moneytrace_financial_settings_owner_v1','mt_bank_balance','mt_month_limit','mt_challenge_goal'];
  const values={};for(const k of keys){const v=localStorage.getItem(k);if(v!==null)values[k]=safeRead(k)??v}
  const backup={format:'MONEYTRACE_FULL_BACKUP',version:1,createdAt:new Date().toISOString(),userId:id,warning:'קובץ זה עשוי להכיל מידע פיננסי אישי ועסקי. שמור אותו במקום פרטי ומאובטח.',data:values};
  download('moneytrace-full-backup-'+new Date().toISOString().slice(0,10)+'.json',backup);toast('קובץ גיבוי מלא הורד למכשיר');
