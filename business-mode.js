@@ -18,7 +18,7 @@ const TYPES={
 const MODULES=[['dashboard','לוח בקרה'],['accounting','הנהלת חשבונות'],['customers','לקוחות'],['suppliers','ספקים'],['invoices','חשבוניות וגבייה'],['inventory','מלאי ומוצרים'],['staff','עובדים ומשמרות'],['special','כלים ייעודיים לעסק'],['cashflow','תזרים מזומנים'],['profit','רווחיות'],['tax','מעקב מסים'],['reports','דוחות'],['ai','יועץ עסקי AI']];
 const blank=()=>({customers:[],suppliers:[],products:[],invoices:[],entries:[],staff:[],special:[]});
 let profile=null,data=blank(),currentModule='dashboard';
-let initialized=false,cloudReady=false,cloudLoading=false,cloudRevision=0,cloudQueue=Promise.resolve(),cloudStatus='Local device storage';
+let initialized=false,cloudReady=false,cloudLoading=null,cloudRevision=0,cloudQueue=Promise.resolve(),cloudStatus='Local device storage';
 function read(){try{profile=JSON.parse(localStorage.getItem(PROFILE())||'null')}catch{profile=null}try{data={...blank(),...JSON.parse(localStorage.getItem(STORE())||'{}')}}catch{data=blank()}if(profile){profile.modules=profile.modules||[];if(!profile.modules.includes('accounting'))profile.modules.push('accounting');}}
 function save(){
  localStorage.setItem(PROFILE(),JSON.stringify(profile));
@@ -51,31 +51,35 @@ function queueCloudSave(){
 }
 async function hydrateCloud(){
  const user=window.mtUser,client=window.mtSupabase;
- if(!user?.id||!client||cloudLoading)return;
- cloudLoading=true;cloudReady=false;cloudStatus='Connecting to cloud…';
- try{
-  const {data:row,error}=await client.from('mt_business_workspace_data').select('payload,revision').eq('user_id',user.id).maybeSingle();
-  if(error)throw error;
-  if(window.mtUser?.id!==user.id)return;
-  if(row?.payload){
-   profile=row.payload.profile||null;
-   data={...blank(),...(row.payload.data||{})};
-   cloudRevision=Number(row.revision||1);
-   writeLocalSnapshot();
-  }else{
-   cloudRevision=0;
-   // First sign-in migration: only this account's already-scoped local workspace is copied.
-   if(profile||Object.values(data).some(v=>Array.isArray(v)&&v.length)){
-    const {data:created,error:saveError}=await client.from('mt_business_workspace_data').insert({user_id:user.id,payload:{profile,data},revision:1}).select('revision').single();
-    if(saveError)throw saveError;
-    cloudRevision=Number(created.revision);
+ if(!user?.id||!client)return;
+ if(cloudLoading)return cloudLoading;
+ cloudLoading=(async()=>{
+  cloudReady=false;cloudStatus='Connecting to cloud…';
+  try{
+   const {data:row,error}=await client.from('mt_business_workspace_data').select('payload,revision').eq('user_id',user.id).maybeSingle();
+   if(error)throw error;
+   if(window.mtUser?.id!==user.id)return;
+   if(row?.payload){
+    profile=row.payload.profile||null;
+    data={...blank(),...(row.payload.data||{})};
+    cloudRevision=Number(row.revision||1);
+    writeLocalSnapshot();
+   }else{
+    cloudRevision=0;
+    // Migrate only the local cache already scoped to this signed-in account.
+    if(profile||Object.values(data).some(v=>Array.isArray(v)&&v.length)){
+     const {data:created,error:saveError}=await client.from('mt_business_workspace_data').insert({user_id:user.id,payload:{profile,data},revision:1}).select('revision').single();
+     if(saveError)throw saveError;
+     cloudRevision=Number(created.revision);
+    }
    }
-  }
-  cloudReady=true;cloudStatus='Synced to cloud';
- }catch(error){
-  cloudReady=false;cloudStatus='Cloud sync unavailable';
-  console.error('MONEYTRACE business workspace could not load from cloud',error);
- }finally{cloudLoading=false}
+   cloudReady=true;cloudStatus='Synced to cloud';
+  }catch(error){
+   cloudReady=false;cloudStatus='Cloud sync unavailable';
+   console.error('MONEYTRACE business workspace could not load from cloud',error);
+  }finally{cloudLoading=null}
+ })();
+ return cloudLoading;
 }
 function toast(s){if(typeof showToast==='function')showToast(s);else alert(s)}
 function sum(arr,fn){return arr.reduce((n,x)=>n+fn(x),0)}
@@ -162,12 +166,14 @@ async function initialize(){
 }
 window.renderBusinessMode=()=>{initialize().catch(error=>{console.error(error);render()})};
 window.addEventListener('mt:user-ready',()=>{
- if(!initialized){read();initialized=true;}
+ // Always switch to the current account's own local namespace before cloud hydration.
+ read();initialized=true;
  if(window.mtUser?.id&&window.mtSupabase){
+  cloudReady=false;cloudRevision=0;
   hydrateCloud().then(()=>{if(initialized)render()});
  }else{
   cloudReady=false;cloudRevision=0;cloudStatus='Local device storage';
-  read();if(initialized)render();
+  render();
  }
 });
 document.addEventListener('submit',e=>{const f=e.target;if(f.id==='bizSetup'){e.preventDefault();const old=profile;profile=defaultProfile(Object.fromEntries(new FormData(f)));if(old&&old.type===profile.type)profile.modules=old.modules;save();render();toast('סביבת העסק נשמרה');return}if(!profile)return;
