@@ -142,7 +142,7 @@ $('#backupInput').addEventListener('change',async e=>{
  // Do not persist Supabase sessions in browser storage.
  // The session remains in memory for this tab; signing in again is required after reload.
  const client=window.supabase.createClient(window.MONEYTRACE_SUPABASE_URL,window.MONEYTRACE_SUPABASE_PUBLISHABLE_KEY,{
-  auth:{persistSession:false,autoRefreshToken:true,detectSessionInUrl:false}
+  auth:{persistSession:false,autoRefreshToken:true,detectSessionInUrl:true,flowType:'pkce',storage:window.sessionStorage}
  });
  window.mtSupabase=client;window.mtUser=null;window.mtCloudSyncEnabled=false;
  const logout=$('#authLogout'),submit=$('#authSubmit'),signup=$('#authSignup');
