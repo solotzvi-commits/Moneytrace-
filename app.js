@@ -139,8 +139,17 @@ $('#backupInput').addEventListener('change',async e=>{
  function showApp(){gate.style.display='none';mainApp.style.display='';mobileNav.style.display=''}
  showGate('בודק התחברות…');
  if(!window.supabase||!window.MONEYTRACE_SUPABASE_URL||!window.MONEYTRACE_SUPABASE_PUBLISHABLE_KEY){status.textContent='שירות הענן לא נטען. בדוק חיבור לאינטרנט.';showGate('לא ניתן לטעון את שירות ההתחברות. בדוק אינטרנט ורענן את הדף.');return}
+ // GitHub Pages is a static client and cannot issue HttpOnly auth cookies.
+ // Keep Supabase access/refresh tokens in memory instead of browser storage.
+ // A full page reload therefore requires the user to sign in again.
+ const authMemory=new Map();
+ const authMemoryStorage={
+  getItem:async key=>authMemory.has(key)?authMemory.get(key):null,
+  setItem:async(key,value)=>{authMemory.set(key,value)},
+  removeItem:async key=>{authMemory.delete(key)}
+ };
  const client=window.supabase.createClient(window.MONEYTRACE_SUPABASE_URL,window.MONEYTRACE_SUPABASE_PUBLISHABLE_KEY,{
-  auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:true}
+  auth:{persistSession:true,storage:authMemoryStorage,autoRefreshToken:true,detectSessionInUrl:true}
  });
  window.mtSupabase=client;window.mtUser=null;window.mtCloudSyncEnabled=false;
  const logout=$('#authLogout'),submit=$('#authSubmit'),signup=$('#authSignup');
