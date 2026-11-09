@@ -162,6 +162,9 @@ $('#backupInput').addEventListener('change',async e=>{
  }
  async function loadFinancialSettings(user){
   const ownerKey='moneytrace_financial_settings_owner_v1';
+  // Store only a one-way fingerprint locally, never the raw account identifier.
+  const ownerDigest=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(user.id));
+  const ownerFingerprint=Array.from(new Uint8Array(ownerDigest),b=>b.toString(16).padStart(2,'0')).join('');
   const previousOwner=localStorage.getItem(ownerKey);
   const {data,error}=await client.from('user_financial_settings').select('settings').eq('user_id',user.id).maybeSingle();
   if(error)throw error;
@@ -172,12 +175,12 @@ $('#backupInput').addEventListener('change',async e=>{
     for(const key of preferenceKeys){if(Object.prototype.hasOwnProperty.call(settings,key))localStorage.setItem(key,String(settings[key]));else localStorage.removeItem(key)}
    }else{
     // Never copy settings left by a different signed-in account into a new account.
-    const initial=previousOwner===null||previousOwner===user.id?readPreferenceSnapshot():{};
-    if(previousOwner!==null&&previousOwner!==user.id){for(const key of preferenceKeys)localStorage.removeItem(key)}
+    const initial=previousOwner===null||previousOwner===ownerFingerprint?readPreferenceSnapshot():{};
+    if(previousOwner!==null&&previousOwner!==ownerFingerprint){for(const key of preferenceKeys)localStorage.removeItem(key)}
     const {error:saveError}=await client.from('user_financial_settings').upsert({user_id:user.id,settings:initial,updated_at:new Date().toISOString()},{onConflict:'user_id'});
     if(saveError)throw saveError;
    }
-   localStorage.setItem(ownerKey,user.id);
+   localStorage.setItem(ownerKey,ownerFingerprint);
    window.dispatchEvent(new CustomEvent('mt:financial-settings-loaded',{detail:{userId:user.id}}));
   }finally{applyingRemoteSettings=false}
  }
