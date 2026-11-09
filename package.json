@@ -7,7 +7,8 @@
     "sync": "npx cap sync",
     "android": "npx cap open android",
     "ios": "npx cap open ios",
-    "assets": "npx capacitor-assets generate"
+    "assets": "npx capacitor-assets generate",
+    "test": "node --test"
   },
   "dependencies": {
     "@capacitor/core": "^7.4.3"
