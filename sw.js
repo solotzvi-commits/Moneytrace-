@@ -1,4 +1,4 @@
-const CACHE='moneytrace-release-v51';
+const CACHE='moneytrace-release-v52';
 const ASSETS=['./','./index.html','./styles.css','./app.js','./features.js','./moneytrace-six-features.js','./js/runtime/feature-loader.js','./profile-settings.js','./moneytrace-4.0-security.js','./moneytrace-security-center.js','./mobile-nav.js','./app-shell.js','./app-polish.css','./supabase-config.js','./manifest.webmanifest','./assets/icon-192.svg','./assets/icon-512.svg'];
 self.addEventListener('install',event=>event.waitUntil((async()=>{const cache=await caches.open(CACHE);await Promise.all(ASSETS.map(async path=>{try{const response=await fetch(path,{cache:'no-store'});if(response.ok)await cache.put(path,response);}catch(error){}}));await self.skipWaiting();})()));
 self.addEventListener('activate',event=>event.waitUntil((async()=>{const keys=await caches.keys();await Promise.all(keys.filter(key=>key.startsWith('moneytrace-release-')&&key!==CACHE).map(key=>caches.delete(key)));await self.clients.claim();})()));
