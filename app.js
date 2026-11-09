@@ -137,6 +137,33 @@ $('#backupInput').addEventListener('change',async e=>{
  let pollHandle=null, syncing=false, syncPending=false, authInitialized=false;
  function setSignedIn(user){window.mtUser=user;window.mtCloudSyncEnabled=false;window.dispatchEvent(new Event("mt:user-ready"));const logged=!!user;status.textContent=logged?'מחובר לחשבון. טוען נתונים…':'עדיין לא מחובר לחשבון ענן.';email.disabled=logged;password.disabled=logged;submit.classList.toggle('hidden',logged);signup.classList.toggle('hidden',logged);logout.classList.toggle('hidden',!logged);if(!logged)showGate('התחבר או צור חשבון כדי להיכנס ל־MONEYTRACE.');}
  function cacheCurrent(){localStorage.setItem(KEY,JSON.stringify(transactions));isDemo=false;render()}
+ const preferenceKeys=['moneytrace_budgets_v1','moneytrace_goals_v1','moneytrace_savings_pool_v1','moneytrace_savings_ledger_v1','moneytrace_savings_destination_v1','moneytrace_last_processed_week_v1','mt_month_limit','mt_bank_balance','mt_challenge_goal'];
+ let settingsSyncTimer=null,applyingRemoteSettings=false,settingsSyncing=false;
+ function readPreferenceSnapshot(){const settings={};for(const key of preferenceKeys){const value=localStorage.getItem(key);if(value!==null)settings[key]=value}return settings}
+ async function syncFinancialSettings(){
+  if(!window.mtUser||!window.mtCloudSyncEnabled||applyingRemoteSettings)return;
+  if(settingsSyncing){settingsSyncTimer=setTimeout(syncFinancialSettings,1200);return}
+  settingsSyncing=true;
+  try{const {error}=await client.from('user_financial_settings').upsert({user_id:window.mtUser.id,settings:readPreferenceSnapshot(),updated_at:new Date().toISOString()},{onConflict:'user_id'});if(error)throw error;status.textContent='מחובר כ־'+window.mtUser.email+' · הנתונים מסונכרנים';}
+  catch(e){status.textContent='הנתונים נשמרו במכשיר; סנכרון ההגדרות נכשל: '+e.message}
+  finally{settingsSyncing=false}
+ }
+ async function loadFinancialSettings(user){
+  const {data,error}=await client.from('user_financial_settings').select('settings').eq('user_id',user.id).maybeSingle();
+  if(error)throw error;
+  applyingRemoteSettings=true;
+  try{
+   const settings=data?.settings;
+   if(settings&&typeof settings==='object'&&!Array.isArray(settings)){
+    for(const key of preferenceKeys){if(Object.prototype.hasOwnProperty.call(settings,key))localStorage.setItem(key,String(settings[key]));else localStorage.removeItem(key)}
+   }else{
+    const initial=readPreferenceSnapshot();
+    if(Object.keys(initial).length){const {error:saveError}=await client.from('user_financial_settings').upsert({user_id:user.id,settings:initial,updated_at:new Date().toISOString()},{onConflict:'user_id'});if(saveError)throw saveError}
+   }
+  }finally{applyingRemoteSettings=false}
+ }
+ const originalStorageSetItem=Storage.prototype.setItem;
+ Storage.prototype.setItem=function(key,value){const result=originalStorageSetItem.call(this,key,value);if(this===localStorage&&preferenceKeys.includes(String(key))&&window.mtCloudSyncEnabled&&!applyingRemoteSettings){clearTimeout(settingsSyncTimer);settingsSyncTimer=setTimeout(()=>syncFinancialSettings(),700)}return result};
  async function syncAll(){
   if(!window.mtUser||!window.mtCloudSyncEnabled)return;
   if(syncing){syncPending=true;return}
@@ -167,6 +194,7 @@ $('#backupInput').addEventListener('change',async e=>{
    const {data:remote,error}=await client.from('transactions').select('id,description,category,date,type,amount').eq('user_id',user.id);
    if(error)throw error;
    transactions=(remote||[]).map(r=>({id:r.id,description:r.description,category:r.category,date:r.date,type:r.type,amount:Number(r.amount)}));
+   await loadFinancialSettings(user);
    cacheCurrent();window.mtCloudSyncEnabled=true;
    status.textContent='מחובר כ־'+user.email+' · '+transactions.length+' תנועות נטענו מהענן';
    gateStatus.textContent='';showApp();
