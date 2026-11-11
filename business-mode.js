@@ -1,7 +1,7 @@
 /* MONEYTRACE Business Mode v1.0 — separate local business workspace. */
 (()=>{
 'use strict';
-const PROFILE=()=>`moneytrace_business_profile_v1_user_${window.mtUser?.id||'local'}`, STORE=()=>`moneytrace_business_data_v1_user_${window.mtUser?.id||'local'}`, PENDING=()=>`moneytrace_business_pending_sync_v1_user_${window.mtUser?.id||'local'}`;
+const PROFILE=()=>`moneytrace_business_profile_v1_user_${window.mtUser?.id||'local'}`, STORE=()=>`moneytrace_business_data_v1_user_${window.mtUser?.id||'local'}`, PENDING=(userId=window.mtUser?.id)=>window.MTBusinessCloudSyncGuards?.pendingKey(userId)||`moneytrace_business_pending_sync_v1_user_${userId||'local'}`;
 const $=s=>document.querySelector(s), money=n=>(window.moneyTraceFormatCurrency?window.moneyTraceFormatCurrency(n):'₪'+Number(n||0).toLocaleString('he-IL',{minimumFractionDigits:0,maximumFractionDigits:2}));
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const today=()=>new Date().toISOString().slice(0,10), month=()=>today().slice(0,7);
@@ -28,9 +28,16 @@ function save(){
 function writeLocalSnapshot(){localStorage.setItem(PROFILE(),JSON.stringify(profile));localStorage.setItem(STORE(),JSON.stringify(data))}
 function queueCloudSave(){
  const userId=window.mtUser?.id;
+ const generation=cloudGeneration;
+ const operation={userId,generation};
+ const isCurrent=()=>window.MTBusinessCloudSyncGuards
+  ?window.MTBusinessCloudSyncGuards.isCurrent(operation,{userId:window.mtUser?.id,generation:cloudGeneration})
+  :generation===cloudGeneration&&window.mtUser?.id===userId;
+ // Capture the original account's key now; never resolve it from the active account in a later catch.
+ const pendingKey=PENDING(userId);
  const snapshot=JSON.parse(JSON.stringify({profile,data}));
  cloudQueue=cloudQueue.then(async()=>{
-  if(!cloudReady||!userId||window.mtUser?.id!==userId)return;
+  if(!cloudReady||!userId||!isCurrent())return;
   const client=window.mtSupabase;
   let result;
   if(cloudRevision===0){
@@ -40,11 +47,29 @@ function queueCloudSave(){
   }
   if(result.error)throw result.error;
   if(!result.data)throw new Error('Workspace changed on another device. Reload before saving again.');
+  // An in-flight write may finish after another account has become active.
+  // Its result must not mutate the new account's revision or sync status.
+  if(!isCurrent()){
+   // If the same account has been signed back in under a newer generation,
+   // preserve the snapshot and force a reload instead of using a stale revision.
+   if(window.mtUser?.id===userId){
+    try{localStorage.setItem(pendingKey,JSON.stringify(snapshot))}catch(storageError){console.error('Could not preserve stale business snapshot',storageError)}
+    cloudReady=false;cloudConflict=true;cloudStatus='Conflict — unsynced local copy preserved';
+    toast('A previous business save completed during account recovery. Reload before continuing.');
+   }
+   return;
+  }
   cloudRevision=Number(result.data.revision);
   cloudStatus='Synced to cloud';
  }).catch(error=>{
+  // Preserve the failed snapshot under the account that created it, even if that
+  // account has since signed out. Do not change another account's sync state.
+  try{localStorage.setItem(pendingKey,JSON.stringify(snapshot))}catch(storageError){console.error('Could not preserve pending business snapshot',storageError)}
+  if(window.mtUser?.id!==userId){
+   console.warn('MONEYTRACE preserved a stale account snapshot without changing the active workspace state');
+   return;
+  }
   cloudReady=false;cloudConflict=true;cloudStatus='Conflict — unsynced local copy preserved';
-  try{localStorage.setItem(PENDING(),JSON.stringify(snapshot))}catch(storageError){console.error('Could not preserve pending business snapshot',storageError)}
   console.error('MONEYTRACE business cloud sync failed',error);
   toast('Business data is saved on this device, but cloud sync paused. Reload before making more changes on another device.');
  });

@@ -146,7 +146,7 @@ $('#backupInput').addEventListener('change',async e=>{
  });
  window.mtSupabase=client;window.mtUser=null;window.mtCloudSyncEnabled=false;
  const logout=$('#authLogout'),submit=$('#authSubmit'),signup=$('#authSignup');
- let pollHandle=null, syncing=false, syncPending=false, authInitialized=false;
+ let pollHandle=null, syncing=false, syncPending=false, authInitialized=false, cloudLoadGeneration=0;
  function setSignedIn(user){window.mtUser=user;window.mtCloudSyncEnabled=false;window.dispatchEvent(new Event("mt:user-ready"));const logged=!!user;status.textContent=logged?'מחובר לחשבון. טוען נתונים…':'עדיין לא מחובר לחשבון ענן.';email.disabled=logged;password.disabled=logged;submit.classList.toggle('hidden',logged);signup.classList.toggle('hidden',logged);logout.classList.toggle('hidden',!logged);if(!logged)showGate('התחבר או צור חשבון כדי להיכנס ל־MONEYTRACE.');}
  function cacheCurrent(){localStorage.setItem(KEY,JSON.stringify(transactions));isDemo=false;render()}
  const preferenceKeys=['moneytrace_budgets_v1','moneytrace_goals_v1','moneytrace_savings_pool_v1','moneytrace_savings_ledger_v1','moneytrace_savings_destination_v1','moneytrace_last_processed_week_v1','mt_month_limit','mt_bank_balance','mt_challenge_goal'];
@@ -160,14 +160,18 @@ $('#backupInput').addEventListener('change',async e=>{
   catch(e){status.textContent='הנתונים נשמרו במכשיר; סנכרון ההגדרות נכשל: '+e.message}
   finally{settingsSyncing=false}
  }
- async function loadFinancialSettings(user){
+ async function loadFinancialSettings(user,generation){
+  const isCurrent=()=>generation===cloudLoadGeneration&&window.mtUser?.id===user.id;
+  if(!isCurrent())return false;
   const ownerKey='moneytrace_financial_settings_owner_v1';
   // Store only a one-way fingerprint locally, never the raw account identifier.
   const ownerDigest=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(user.id));
   const ownerFingerprint=Array.from(new Uint8Array(ownerDigest),b=>b.toString(16).padStart(2,'0')).join('');
+  if(!isCurrent())return false;
   const previousOwner=localStorage.getItem(ownerKey);
   const {data,error}=await client.from('user_financial_settings').select('settings').eq('user_id',user.id).maybeSingle();
   if(error)throw error;
+  if(!isCurrent())return false;
   applyingRemoteSettings=true;
   try{
    const settings=data?.settings;
@@ -180,21 +184,25 @@ $('#backupInput').addEventListener('change',async e=>{
     const {error:saveError}=await client.from('user_financial_settings').upsert({user_id:user.id,settings:initial,updated_at:new Date().toISOString()},{onConflict:'user_id'});
     if(saveError)throw saveError;
    }
+   if(!isCurrent())return false;
    localStorage.setItem(ownerKey,ownerFingerprint);
    window.dispatchEvent(new CustomEvent('mt:financial-settings-loaded',{detail:{userId:user.id}}));
+   return true;
   }finally{applyingRemoteSettings=false}
  }
  const originalStorageSetItem=Storage.prototype.setItem;
  Storage.prototype.setItem=function(key,value){const result=originalStorageSetItem.call(this,key,value);if(this===localStorage&&preferenceKeys.includes(String(key))&&window.mtCloudSyncEnabled&&!applyingRemoteSettings){clearTimeout(settingsSyncTimer);settingsSyncTimer=setTimeout(()=>syncFinancialSettings(),700)}return result};
  async function syncAll(){
-  if(!window.mtUser||!window.mtCloudSyncEnabled)return;
+  const userId=window.mtUser?.id;
+  if(!userId||!window.mtCloudSyncEnabled)return;
   if(syncing){syncPending=true;return}
   syncing=true;
   try{
-   const rows=transactions.map(t=>({id:String(t.id),user_id:window.mtUser.id,description:String(t.description),category:String(t.category||'אחר'),date:t.date,type:t.type,amount:Number(t.amount)}));
+   const snapshot=transactions.slice();
+   const rows=snapshot.map(t=>({id:String(t.id),user_id:userId,description:String(t.description),category:String(t.category||'אחר'),date:t.date,type:t.type,amount:Number(t.amount)}));
    if(rows.length){const {error}=await client.from('transactions').upsert(rows,{onConflict:'id'});if(error)throw error}
-   status.textContent='מחובר כ־'+window.mtUser.email+' · הסנכרון פעיל';
-  } finally {syncing=false;if(syncPending){syncPending=false;syncAll().catch(err=>{status.textContent='שגיאת סנכרון: '+err.message})}}
+   if(window.mtUser?.id===userId&&window.mtCloudSyncEnabled)status.textContent='מחובר כ־'+window.mtUser.email+' · הסנכרון פעיל';
+  } finally {syncing=false;if(syncPending){syncPending=false;if(window.mtUser&&window.mtCloudSyncEnabled)syncAll().catch(err=>{if(window.mtUser)status.textContent='שגיאת סנכרון: '+err.message})}}
  }
  window.syncAll=syncAll;
  async function refreshFromCloud(){
@@ -212,6 +220,7 @@ $('#backupInput').addEventListener('change',async e=>{
  }
  async function loadCloud(user){
   if(window.mtLoadingUser===user.id)return;
+  const generation=++cloudLoadGeneration;
   window.mtLoadingUser=user.id;window.mtCloudSyncEnabled=false;setSignedIn(user);
   // Every account has its own local cache. The cloud is authoritative; never upload
   // the previous browser user's local rows into a newly selected account.
@@ -219,15 +228,17 @@ $('#backupInput').addEventListener('change',async e=>{
   try{
    const {data:remote,error}=await client.from('transactions').select('id,description,category,date,type,amount').eq('user_id',user.id);
    if(error)throw error;
+   if(generation!==cloudLoadGeneration||window.mtUser?.id!==user.id)return;
    transactions=(remote||[]).map(r=>({id:r.id,description:r.description,category:r.category,date:r.date,type:r.type,amount:Number(r.amount)}));
-   await loadFinancialSettings(user);
+   const settingsLoaded=await loadFinancialSettings(user,generation);
+   if(!settingsLoaded||generation!==cloudLoadGeneration||window.mtUser?.id!==user.id)return;
    cacheCurrent();window.mtCloudSyncEnabled=true;
    status.textContent='מחובר כ־'+user.email+' · '+transactions.length+' תנועות נטענו מהענן';
    gateStatus.textContent='';showApp();
    if(pollHandle)clearInterval(pollHandle);
    pollHandle=setInterval(()=>refreshFromCloud().catch(err=>{status.textContent='שגיאת סנכרון: '+err.message}),15000);
-  }catch(e){window.mtCloudSyncEnabled=false;status.textContent='התחברת, אך טעינת הענן נכשלה: '+e.message;showGate('ההתחברות הצליחה, אך טעינת הנתונים נכשלה: '+e.message);}
-  finally{window.mtLoadingUser=null;}
+  }catch(e){if(generation===cloudLoadGeneration&&window.mtUser?.id===user.id){window.mtCloudSyncEnabled=false;status.textContent='התחברת, אך טעינת הענן נכשלה: '+e.message;showGate('ההתחברות הצליחה, אך טעינת הנתונים נכשלה: '+e.message);}}
+  finally{if(window.mtLoadingUser===user.id)window.mtLoadingUser=null;}
  }
  function validGateEmail(){
   gateEmail.value=gateEmail.value.trim();
@@ -252,7 +263,7 @@ $('#backupInput').addEventListener('change',async e=>{
  });
  form.addEventListener('submit',async e=>{e.preventDefault();submit.disabled=true;try{const {data,error}=await client.auth.signInWithPassword({email:email.value.trim(),password:password.value});if(error)throw error;if(data.user)await loadCloud(data.user)}catch(err){status.textContent='שגיאת התחברות: '+err.message}finally{submit.disabled=false}});
  signup.addEventListener('click',async()=>{if(!email.value.trim()||password.value.length<8){status.textContent='הזן אימייל וסיסמה של לפחות 8 תווים.';return}signup.disabled=true;try{const {data,error}=await client.auth.signUp({email:email.value.trim(),password:password.value,options:{emailRedirectTo:'https://solotzvi-commits.github.io/Moneytrace-/'}});if(error)throw error;if(data.session&&data.user)await loadCloud(data.user);else status.textContent='נשלח אליך אימייל לאימות. פתח אותו ואז חזור לאתר והתחבר.'}catch(err){status.textContent='שגיאת הרשמה: '+err.message}finally{signup.disabled=false}});
- logout.addEventListener('click',async()=>{window.mtCloudSyncEnabled=false;if(pollHandle)clearInterval(pollHandle);const {error}=await client.auth.signOut();if(error){status.textContent='שגיאה בהתנתקות: '+error.message;return}setSignedIn(null);showToast('התנתקת מהחשבון')});
+ logout.addEventListener('click',async()=>{cloudLoadGeneration++;window.mtCloudSyncEnabled=false;if(pollHandle)clearInterval(pollHandle);const {error}=await client.auth.signOut();if(error){status.textContent='שגיאה בהתנתקות: '+error.message;return}setSignedIn(null);showToast('התנתקת מהחשבון')});
  client.auth.onAuthStateChange((event,session)=>{
   // Defer follow-up Supabase requests until the auth callback has released its internal lock.
   if(event==='SIGNED_IN'&&session?.user&&window.mtUser?.id!==session.user.id){
@@ -263,9 +274,10 @@ $('#backupInput').addEventListener('change',async e=>{
    setTimeout(async()=>{
     const {data}=await client.auth.getSession().catch(()=>({data:{session:null}}));
     if(data?.session?.user)return;
+    cloudLoadGeneration++;
     window.mtCloudSyncEnabled=false;
     if(pollHandle){clearInterval(pollHandle);pollHandle=null;}
-    window.mtUser=null;setSignedIn(null);
+    window.mtUser=null;window.mtLoadingUser=null;setSignedIn(null);
    },0);
   }
  });
