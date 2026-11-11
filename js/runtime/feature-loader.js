@@ -4,7 +4,7 @@ const loaded=new Map();
 const groups={
  insights:['moneytrace-six-features.js','moneytrace-intelligence-core.js','moneytrace-intelligence.js'],
  subscriptions:['smart-subscriptions.js'],
- business:['business-accounting-core.js','business-mode.js','moneytrace-intelligence-core.js','moneytrace-intelligence.js'],
+ business:['business-accounting-core.js','business-cloud-sync-guards.js','business-mode.js','moneytrace-intelligence-core.js','moneytrace-intelligence.js'],
  assistant:['coach-2.2.js'],
  admin:['usage-analytics.js']
 };
