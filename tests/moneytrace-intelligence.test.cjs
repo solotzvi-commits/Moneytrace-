@@ -1,5 +1,6 @@
 const test=require('node:test');
 const assert=require('node:assert/strict');
+const fs=require('node:fs');
 const {analyzePersonal,analyzeBusiness,median}=require('../moneytrace-intelligence-core.js');
 test('median handles odd and even sample sizes',()=>{assert.equal(median([9,1,5]),5);assert.equal(median([8,2,4,6]),5)});
 test('personal analysis calculates monthly totals, budgets and projections',()=>{
@@ -38,4 +39,12 @@ test('long-range forecast uses completed-month history and a real starting balan
 test('long-range forecast never labels a net movement as an account balance without a starting balance',()=>{
  const f=require('../moneytrace-intelligence-core.js').forecastPersonal({transactions:[]},new Date('2026-11-15T12:00:00Z'),6,null);
  assert.equal(f.hasStartingBalance,false);assert.equal(f.schedule[5].projectedBalance,null);assert.equal(f.confidence,'insufficient');
+});
+
+test('dashboard month summary never extrapolates partial-month daily pace',()=>{
+ const dashboard=fs.readFileSync(require.resolve('../moneytrace-six-features.js'),'utf8');
+ assert.match(dashboard,/monthToDateNet=income-expense/);
+ assert.match(dashboard,/money\(monthToDateNet\)/);
+ assert.doesNotMatch(dashboard,/forecastIncome=income\/day\*days/);
+ assert.match(dashboard,/לא תחזית ולא יתרת חשבון/);
 });
