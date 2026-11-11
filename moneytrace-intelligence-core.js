@@ -65,6 +65,27 @@
     if(!actions.length)actions.push('המשך לעדכן תנועות ותקציבים כדי לשמור על תמונה מדויקת.');
     return {month:current,income,expenses,balance:income-expenses,savingRate,projectedIncome,projectedExpenses,projectedBalance:projectedIncome-projectedExpenses,daysRemaining:remaining,score,label,overBudget,anomalies,recurring,recurringMonthly:recurring.reduce((s,x)=>s+x.monthlyEstimate,0),actions,transactions:monthRows.length};
   }
+
+  function forecastPersonal(input,nowValue,horizonMonths,startingBalance){
+    const source=Array.isArray(input)?input:(Array.isArray(input?.transactions)?input.transactions:[]);
+    const rows=source.filter(t=>t&&Number.isFinite(dateMs(t.date))&&Number.isFinite(number(t.amount)));
+    const now=nowValue instanceof Date?nowValue:new Date(nowValue||Date.now());
+    const horizon=Math.max(3,Math.min(12,Math.round(number(horizonMonths)||3)));
+    const monthly=new Map();
+    rows.forEach(t=>{const key=String(t.date).slice(0,7);if(key>=monthKey(new Date(now.getFullYear(),now.getMonth()-6,1))&&key<monthKey(now)){if(!monthly.has(key))monthly.set(key,{income:0,expenses:0,items:0});const m=monthly.get(key);if(t.type==='income')m.income+=Math.abs(number(t.amount));else m.expenses+=Math.abs(number(t.amount));m.items++;}});
+    const history=[...monthly.values()].filter(m=>m.items>0).slice(-3);
+    const avg=key=>history.length?history.reduce((s,m)=>s+m[key],0)/history.length:0;
+    const avgIncome=avg('income'),avgExpenses=avg('expenses');
+    const knownBalance=startingBalance!==null&&startingBalance!==undefined&&startingBalance!==''&&Number.isFinite(Number(startingBalance));
+    let balance=knownBalance?Number(startingBalance):0;
+    const schedule=[];
+    for(let i=1;i<=horizon;i++){
+      const d=new Date(now.getFullYear(),now.getMonth()+i,1);
+      balance+=avgIncome-avgExpenses;
+      schedule.push({month:monthKey(d),income:avgIncome,expenses:avgExpenses,net:avgIncome-avgExpenses,projectedBalance:knownBalance?balance:null,cumulativeChange:balance-(knownBalance?Number(startingBalance):0)});
+    }
+    return {horizonMonths:horizon,historyMonths:history.length,averageMonthlyIncome:avgIncome,averageMonthlyExpenses:avgExpenses,startingBalance:knownBalance?Number(startingBalance):null,hasStartingBalance:knownBalance,confidence:history.length>=3?'medium':history.length>=1?'low':'insufficient',schedule};
+  }
   function analyzeBusiness(data,profile,nowValue){
     const d=data&&typeof data==='object'?data:{},entries=Array.isArray(d.entries)?d.entries:[];
     const now=nowValue instanceof Date?nowValue:new Date(nowValue||Date.now()),key=monthKey(now),month=entries.filter(x=>String(x.date||'').slice(0,7)===key);
@@ -76,5 +97,5 @@
     const margin=income>0?(income-expenses)/income:null;
     return {name:String(profile?.name||'העסק שלך').slice(0,80),income,expenses,net:income-expenses,margin,outstanding,openInvoices:invoices.filter(x=>x.status!=='paid').length,lowStock:lowStock.length,lowStockNames:lowStock.slice(0,5).map(x=>String(x.name||x.title||'מוצר').slice(0,60)),entries:month.length};
   }
-  return {analyzePersonal,analyzeBusiness,median};
+  return {analyzePersonal,analyzeBusiness,forecastPersonal,median};
 });
