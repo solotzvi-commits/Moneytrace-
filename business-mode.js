@@ -49,14 +49,23 @@ function queueCloudSave(){
   if(!result.data)throw new Error('Workspace changed on another device. Reload before saving again.');
   // An in-flight write may finish after another account has become active.
   // Its result must not mutate the new account's revision or sync status.
-  if(!isCurrent())return;
+  if(!isCurrent()){
+   // If the same account has been signed back in under a newer generation,
+   // preserve the snapshot and force a reload instead of using a stale revision.
+   if(window.mtUser?.id===userId){
+    try{localStorage.setItem(pendingKey,JSON.stringify(snapshot))}catch(storageError){console.error('Could not preserve stale business snapshot',storageError)}
+    cloudReady=false;cloudConflict=true;cloudStatus='Conflict — unsynced local copy preserved';
+    toast('A previous business save completed during account recovery. Reload before continuing.');
+   }
+   return;
+  }
   cloudRevision=Number(result.data.revision);
   cloudStatus='Synced to cloud';
  }).catch(error=>{
   // Preserve the failed snapshot under the account that created it, even if that
-  // account has since signed out. Do not change the active account's sync state.
+  // account has since signed out. Do not change another account's sync state.
   try{localStorage.setItem(pendingKey,JSON.stringify(snapshot))}catch(storageError){console.error('Could not preserve pending business snapshot',storageError)}
-  if(!isCurrent()){
+  if(window.mtUser?.id!==userId){
    console.warn('MONEYTRACE preserved a stale account snapshot without changing the active workspace state');
    return;
   }

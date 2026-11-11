@@ -9,10 +9,11 @@
  function pendingKey(userId){
   return 'moneytrace_business_pending_sync_v1_user_'+(userId||'local');
  }
- function isCurrent(operation,active){
-  return !!operation&&!!active&&
-   operation.userId===active.userId&&
-   operation.generation===active.generation;
+ function sameAccount(operation,active){
+  return !!operation&&!!active&&!!operation.userId&&operation.userId===active.userId;
  }
- return Object.freeze({pendingKey,isCurrent});
+ function isCurrent(operation,active){
+  return sameAccount(operation,active)&&operation.generation===active.generation;
+ }
+ return Object.freeze({pendingKey,sameAccount,isCurrent});
 });

@@ -22,3 +22,11 @@ test('a completed save may update state only for its own current account generat
  assert.equal(guards.isCurrent(operation,{userId:'account-a',generation:8}),false);
  assert.equal(guards.isCurrent(operation,{userId:'account-b',generation:7}),false);
 });
+
+test('same account with a new generation is still the same owner but not the same save session',()=>{
+ const operation={userId:'account-a',generation:7};
+ const active={userId:'account-a',generation:8};
+ assert.equal(guards.sameAccount(operation,active),true);
+ assert.equal(guards.isCurrent(operation,active),false);
+ assert.equal(guards.sameAccount(operation,{userId:'account-b',generation:8}),false);
+});
