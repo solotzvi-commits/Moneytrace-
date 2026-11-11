@@ -22,3 +22,20 @@ test('recurring detection identifies repeated monthly charges',()=>{
  const a=analyzePersonal({transactions:rows,budgets:{}},now);
  assert.equal(a.recurring.length,1);assert.equal(a.recurring[0].cadence,'חודשי');assert.equal(a.recurringMonthly,39);
 });
+
+test('long-range forecast uses completed-month history and a real starting balance',()=>{
+ const rows=[
+  {date:'2026-08-10',type:'income',amount:4000},{date:'2026-08-11',type:'expense',amount:2000},
+  {date:'2026-09-10',type:'income',amount:5000},{date:'2026-09-11',type:'expense',amount:2500},
+  {date:'2026-10-10',type:'income',amount:6000},{date:'2026-10-11',type:'expense',amount:3000},
+  {date:'2026-11-10',type:'income',amount:9000}
+ ];
+ const f=require('../moneytrace-intelligence-core.js').forecastPersonal({transactions:rows},new Date('2026-11-15T12:00:00Z'),12,10000);
+ assert.equal(f.horizonMonths,12);assert.equal(f.historyMonths,3);
+ assert.equal(f.averageMonthlyIncome,5000);assert.equal(f.averageMonthlyExpenses,2500);
+ assert.equal(f.schedule[0].projectedBalance,12500);assert.equal(f.schedule[11].projectedBalance,40000);
+});
+test('long-range forecast never labels a net movement as an account balance without a starting balance',()=>{
+ const f=require('../moneytrace-intelligence-core.js').forecastPersonal({transactions:[]},new Date('2026-11-15T12:00:00Z'),6,null);
+ assert.equal(f.hasStartingBalance,false);assert.equal(f.schedule[5].projectedBalance,null);assert.equal(f.confidence,'insufficient');
+});
