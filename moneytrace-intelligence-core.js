@@ -73,7 +73,7 @@
     const horizon=Math.max(3,Math.min(12,Math.round(number(horizonMonths)||3)));
     const monthly=new Map();
     rows.forEach(t=>{const key=String(t.date).slice(0,7);if(key>=monthKey(new Date(now.getFullYear(),now.getMonth()-6,1))&&key<monthKey(now)){if(!monthly.has(key))monthly.set(key,{income:0,expenses:0,items:0});const m=monthly.get(key);if(t.type==='income')m.income+=Math.abs(number(t.amount));else m.expenses+=Math.abs(number(t.amount));m.items++;}});
-    const history=[...monthly.values()].filter(m=>m.items>0).slice(-3);
+    const history=[...monthly.entries()].sort((a,b)=>a[0].localeCompare(b[0])).map(x=>x[1]).filter(m=>m.items>0).slice(-3);
     const avg=key=>history.length?history.reduce((s,m)=>s+m[key],0)/history.length:0;
     const avgIncome=avg('income'),avgExpenses=avg('expenses');
     const knownBalance=startingBalance!==null&&startingBalance!==undefined&&startingBalance!==''&&Number.isFinite(Number(startingBalance));
