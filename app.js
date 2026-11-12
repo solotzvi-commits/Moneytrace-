@@ -135,9 +135,12 @@ $('#backupInput').addEventListener('change',async e=>{
 (function initCloud(){
  const status=$('#cloudStatus'),form=$('#authForm'),email=$('#authEmail'),password=$('#authPassword');
  const gate=$('#loginGate'),gateForm=$('#loginGateForm'),gateEmail=$('#gateEmail'),gatePassword=$('#gatePassword'),gateStatus=$('#gateStatus'),gateSignup=$('#gateSignup'),mainApp=$('#mainApp'),mobileNav=$('#mainMobileNav');
- function showGate(message){gate.style.display='flex';mainApp.style.display='none';mobileNav.style.display='none';if(message)gateStatus.textContent=message}
+ const gateGoogle=$('#gateGoogle'),gateDivider=gateGoogle?.previousElementSibling,gateFootnote=gateGoogle?.nextElementSibling?.nextElementSibling,gateTitle=gate.querySelector('h2'),gateIntro=gateTitle?.nextElementSibling;
+ function showGate(message){gate.style.display='flex';mainApp.style.display='none';mobileNav.style.display='none';gateForm.hidden=false;if(gateGoogle)gateGoogle.hidden=false;if(gateDivider)gateDivider.hidden=false;if(gateFootnote)gateFootnote.hidden=false;if(gateTitle)gateTitle.textContent='ברוך הבא';if(gateIntro)gateIntro.textContent='התחבר או צור חשבון כדי להיכנס למרכז הפיננסי האישי שלך.';if(message)gateStatus.textContent=message}
+ function showGateLoading(message='משלים את ההתחברות…'){gate.style.display='flex';mainApp.style.display='none';mobileNav.style.display='none';gateForm.hidden=true;if(gateGoogle)gateGoogle.hidden=true;if(gateDivider)gateDivider.hidden=true;if(gateFootnote)gateFootnote.hidden=true;if(gateTitle)gateTitle.textContent='רק רגע…';if(gateIntro)gateIntro.textContent='אנחנו מאמתים את החשבון וטוענים את הנתונים שלך.';gateStatus.textContent=message}
  function showApp(){gate.style.display='none';mainApp.style.display='';mobileNav.style.display=''}
- showGate('בודק התחברות…');
+ // Never flash the sign-in form while Supabase is restoring an existing OAuth session.
+ showGateLoading('בודק התחברות…');
  if(!window.supabase||!window.MONEYTRACE_SUPABASE_URL||!window.MONEYTRACE_SUPABASE_PUBLISHABLE_KEY){status.textContent='שירות הענן לא נטען. בדוק חיבור לאינטרנט.';showGate('לא ניתן לטעון את שירות ההתחברות. בדוק אינטרנט ורענן את הדף.');return}
  // Persist the Supabase session so OAuth callbacks and installed PWAs can resume
  // after the browser returns from Google. Sign-out clears the stored session.
