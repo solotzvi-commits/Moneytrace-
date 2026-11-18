@@ -36,6 +36,7 @@ function queueCloudSave(){
  // Capture the original account's key now; never resolve it from the active account in a later catch.
  const pendingKey=PENDING(userId);
  const snapshot=JSON.parse(JSON.stringify({profile,data}));
+ cloudStatus='Syncing…';if(currentModule==='dashboard')render();
  cloudQueue=cloudQueue.then(async()=>{
   if(!cloudReady||!userId||!isCurrent())return;
   const client=window.mtSupabase;
@@ -60,7 +61,7 @@ function queueCloudSave(){
    return;
   }
   cloudRevision=Number(result.data.revision);
-  cloudStatus='Synced to cloud';
+  cloudStatus='Synced to cloud';if(currentModule==='dashboard')render();
  }).catch(error=>{
   // Preserve the failed snapshot under the account that created it, even if that
   // account has since signed out. Do not change another account's sync state.
@@ -70,6 +71,7 @@ function queueCloudSave(){
    return;
   }
   cloudReady=false;cloudConflict=true;cloudStatus='Conflict — unsynced local copy preserved';
+  if(currentModule==='dashboard')render();
   console.error('MONEYTRACE business cloud sync failed',error);
   toast('Business data is saved on this device, but cloud sync paused. Reload before making more changes on another device.');
  });
@@ -135,7 +137,7 @@ function productForm(){return `<form class="business-form" id="bizProduct"><h4>�
 function invoiceForm(){return `<form class="business-form" id="bizInvoice"><h4>＋ דרישת תשלום / טיוטת חשבונית</h4><label>לקוח<input name="customer" required placeholder="שם הלקוח"></label><label>תיאור השירות / המוצר<input name="title" required></label><div class="form-row"><label>סכום (₪)<input name="amount" type="number" min="0.01" step="0.01" required></label><label>תאריך לתשלום<input name="due" type="date" value="${today()}" required></label></div><button class="secondary">יצירת דרישת תשלום</button><small class="business-muted">מסמך מעקב פנימי בלבד — אינו חשבונית מס/קבלה רשמית.</small></form>`}
 function listRows(items,empty,renderer){return items.length?`<div class="business-list">${items.map(renderer).join('')}</div>`:`<div class="business-empty">${empty}</div>`}
 function renderSyncStatus(){
- const state=cloudConflict?'conflict':cloudReady?'synced':cloudStatus.includes('Connecting')?'syncing':window.mtUser?.id?'paused':'local';
+ const state=cloudConflict?'conflict':cloudReady?'synced':(cloudStatus.includes('Connecting')||cloudStatus.includes('Syncing'))?'syncing':window.mtUser?.id?'paused':'local';
  const labels={conflict:['נדרש טיפול בסנכרון','נשמר עותק מקומי שלא סונכרן. אין לדרוס את נתוני הענן.'],synced:['מסונכרן לענן','השינויים העסקיים האחרונים נשמרו בחשבון שלך.'],syncing:['מתחבר לענן','בודקים את סביבת העסק שלך.'],paused:['הסנכרון מושהה','הנתונים נשמרים במכשיר עד לחידוש החיבור.'],local:['שמירה במכשיר זה בלבד','התחבר לחשבון כדי לסנכרן בין מכשירים.']};
  const [title,detail]=labels[state];
  return '<section class="business-sync-card is-'+state+'" role="status" aria-live="polite"><div class="business-sync-indicator" aria-hidden="true"></div><div class="business-sync-copy"><b>'+title+'</b><small>'+detail+'</small></div>'+(state==='conflict'?'<div class="business-sync-actions"><button type="button" id="bizDownloadConflict">הורדת גיבוי</button><button type="button" id="bizUseCloudVersion">טעינת גרסת הענן</button></div>':'<span class="business-sync-meta">'+(state==='synced'?'☁ Cloud sync':'')+'</span>')+'</section>';
